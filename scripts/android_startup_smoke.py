@@ -78,9 +78,12 @@ def main():
         activity = capture(args.output, "after-alvr-selection")
         resumed = [line.strip() for line in activity.splitlines() if "ResumedActivity" in line]
         report["resumed_activity"] = resumed
-        if not resumed or any("ErrorReporting" in line for line in resumed):
-            raise RuntimeError("ALVR selection reached an error screen")
-        log = adb("logcat", "-d", "-v", "threadtime")
+        allowed = (".ALVRActivity", "com.google.cardboard.sdk.QrCodeCaptureActivity")
+        if not any(PACKAGE in line and any(name in line for name in allowed)
+                   for line in resumed):
+            raise RuntimeError("ALVR or viewer setup is not the resumed activity")
+        log = adb("logcat", "-d", "-v", "threadtime", "--pid", pid)
+        (args.output / "application-logcat.txt").write_text(log)
         if "onCreate ALVRActivity" not in log:
             raise RuntimeError("Native streaming activity was never created")
         if re.search(r"FATAL EXCEPTION|Fatal signal|UnsatisfiedLinkError", log):
