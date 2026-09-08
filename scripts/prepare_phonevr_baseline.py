@@ -18,24 +18,25 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("phonevr", type=Path)
     parser.add_argument("cardboard", type=Path)
+    parser.add_argument("--abi", choices=("arm64-v8a", "x86_64"), default="arm64-v8a")
     args = parser.parse_args()
     project = args.phonevr / "code/mobile/android/PhoneVR"
     app = project / "app/build.gradle"
     replace_once(app, "'io.github.zxing-cpp:android:2.3.0-SNAPSHOT'",
                  "'io.github.zxing-cpp:android:2.3.0'")
     replace_once(app, "minSdkVersion 24", "minSdkVersion 26")
-    replace_once(app, "    defaultConfig {\n", "    defaultConfig {\n        ndk { abiFilters 'arm64-v8a' }\n")
+    replace_once(app, "    defaultConfig {\n", f"    defaultConfig {{\n        ndk {{ abiFilters '{args.abi}' }}\n")
     native = project / "ALVR/alvr/xtask/src/build.rs"
     replace_once(native,
                  '        "arm64-v8a",\n        "-t",\n        "armeabi-v7a",\n        "-t",\n        "x86_64",\n        "-t",\n        "x86",\n        "-p",',
-                 '        "arm64-v8a",\n        "-p",')
+                 f'        "{args.abi}",\n        "-p",')
     replace_once(native, 'let mut rust_flags = vec![];',
                  'let mut rust_flags = vec!["--locked"];')
     sdk = args.cardboard / "sdk/build.gradle"
     replace_once(sdk, "    compileSdk = 34", "    compileSdk = 34\n    ndkVersion '25.2.9519653'")
     replace_once(sdk, "            // abiFilters 'armeabi-v7a', 'arm64-v8a'",
-                 "            abiFilters 'arm64-v8a'")
-    print("Applied arm64 baseline build repairs; no ARCore or hand integration added.")
+                 f"            abiFilters '{args.abi}'")
+    print(f"Applied {args.abi} baseline build repairs; no ARCore or hand integration added.")
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-"""Check that a baseline APK contains its required arm64 native components."""
+"""Check that a baseline APK contains its required native components."""
 import argparse
 import hashlib
 import json
@@ -7,7 +7,8 @@ import struct
 import zipfile
 
 
-def verify(path):
+def verify(path, abi="arm64-v8a"):
+    machine = {"arm64-v8a": 183, "x86_64": 62}[abi]
     required = (
         "libnative-lib-alvr.so",
         "libalvr_client_core.so",
@@ -24,14 +25,14 @@ def verify(path):
             if name not in names:
                 raise ValueError(f"Missing {name}")
         for library in required:
-            name = f"lib/arm64-v8a/{library}"
+            name = f"lib/{abi}/{library}"
             header = apk.read(name)[:20]
             if len(header) < 20 or header[:6] != b"\x7fELF\x02\x01":
                 raise ValueError(f"Not a little-endian ELF64 library: {name}")
-            if struct.unpack_from("<H", header, 18)[0] != 183:
-                raise ValueError(f"Not an AArch64 library: {name}")
+            if struct.unpack_from("<H", header, 18)[0] != machine:
+                raise ValueError(f"Wrong ELF machine for {abi}: {name}")
         abis = sorted({n.split('/')[1] for n in names if n.startswith('lib/') and n.endswith('.so')})
-        if abis != ["arm64-v8a"]:
+        if abis != [abi]:
             raise ValueError(f"Unexpected baseline ABIs: {abis}")
     return {
         "apk": path.name,
@@ -48,11 +49,12 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("apk_directory", type=Path)
     parser.add_argument("--report", required=True, type=Path)
+    parser.add_argument("--abi", choices=("arm64-v8a", "x86_64"), default="arm64-v8a")
     args = parser.parse_args()
     apks = sorted(args.apk_directory.glob("*.apk"))
     if len(apks) != 1:
         raise SystemExit(f"Expected exactly one baseline APK, found {len(apks)}")
-    report = verify(apks[0])
+    report = verify(apks[0], args.abi)
     args.report.parent.mkdir(parents=True, exist_ok=True)
     args.report.write_text(json.dumps(report, indent=2) + "\n")
     print(json.dumps(report, indent=2))
