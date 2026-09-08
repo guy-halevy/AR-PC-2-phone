@@ -1,0 +1,9 @@
+/build/
+/third_party/
+__pycache__/
+*.pyc
+pairing.key
+pairing.session
+*.jks
+local.properties
+

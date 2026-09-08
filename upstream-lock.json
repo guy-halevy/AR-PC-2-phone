@@ -1,0 +1,64 @@
+{
+  "audit_date": "2026-09-07",
+  "binary_compatibility_verified_on_hardware": false,
+  "selected_sources": [
+    {
+      "name": "PhoneVR",
+      "url": "https://github.com/PhoneVR-Developers/PhoneVR.git",
+      "commit": "7fdcebee4a662eb8a1c7a8b19774aac71820a772",
+      "source_date": "2024-11-25",
+      "recursive_submodules": true
+    },
+    {
+      "name": "DesktopPlus",
+      "url": "https://github.com/elvissteinjr/DesktopPlus.git",
+      "commit": "031d74d69f08411a9a9b1030d3d428ac02b93549",
+      "tag": "v3.6",
+      "source_date": "2026-08-14",
+      "recursive_submodules": false
+    }
+  ],
+  "phonevr_submodule": {
+    "path": "code/mobile/android/PhoneVR/ALVR",
+    "url": "https://github.com/PhoneVR-Developers/ALVR-phonevr",
+    "commit": "1d121fa7e0761ef26473c6b3f3fbd9b6051ce033",
+    "matching_alvr_release": "v20.8.0"
+  },
+  "latest_observed_releases_not_automatically_selected": {
+    "PhoneVR": {
+      "tag": "v2.0.0-beta",
+      "date": "2024-05-04"
+    },
+    "ALVR": {
+      "tag": "v20.14.1",
+      "date": "2025-07-14"
+    },
+    "DesktopPlus": {
+      "tag": "v3.6",
+      "date": "2026-08-14"
+    },
+    "ARCore": {
+      "tag": "1.56.0",
+      "date": "2026-09-04"
+    },
+    "MediaPipe": {
+      "tag": "v1.0.0",
+      "date": "2026-07-28",
+      "android_maven_artifact": "com.google.mediapipe:tasks-vision:1.0.0 (Google Maven metadata verified; integration not built)"
+    },
+    "OpenCV": {
+      "tag": "5.0.0",
+      "date": "2026-06-06"
+    },
+    "OpenVR": {
+      "tag": "v2.15.6",
+      "date": "2026-03-27"
+    }
+  },
+  "reproducibility_gaps": [
+    "PhoneVR prepare-alvr-deps.sh uses moving Cardboard master",
+    "PhoneVR preparation invokes cargo update",
+    "PhoneVR Gradle includes a ZXing SNAPSHOT dependency",
+    "Android SDK, NDK, Rust/native dependencies and MediaPipe/model artifacts are not resolved by this lock"
+  ]
+}

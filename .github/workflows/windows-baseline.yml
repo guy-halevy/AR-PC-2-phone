@@ -1,0 +1,49 @@
+name: Windows DesktopPlus baseline
+on:
+  push:
+    paths:
+      - '.github/workflows/windows-baseline.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  desktopplus:
+    runs-on: windows-2022
+    timeout-minutes: 30
+    steps:
+      - name: Checkout pinned DesktopPlus source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: elvissteinjr/DesktopPlus
+          ref: 031d74d69f08411a9a9b1030d3d428ac02b93549
+          persist-credentials: false
+      - name: Set up MSBuild
+        uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2
+      - name: Restore dependencies
+        run: nuget restore src/DesktopPlus.sln
+      - name: Compile the unmodified Windows baseline
+        run: msbuild /m /p:Configuration=Release /p:Platform=x64 src/DesktopPlus.sln
+      - name: Include corresponding source and notices
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path baseline-artifact
+          git archive --format=zip --prefix=DesktopPlus-source/ -o baseline-artifact/DesktopPlus-source.zip HEAD
+          Copy-Item LICENSE baseline-artifact/LICENSE-DesktopPlus.txt
+          @'
+          Unmodified DesktopPlus v3.6 baseline.
+          Source commit: 031d74d69f08411a9a9b1030d3d428ac02b93549
+          This is not a PhoneXR release and includes no PhoneXR hand/pose adapter.
+          Compilation is not SteamVR hardware validation.
+          '@ | Set-Content baseline-artifact/BASELINE-STATUS.txt
+      - name: Upload baseline binaries and corresponding source
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: DesktopPlus-v3.6-baseline
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            src/x64/Release/**
+            !src/x64/Release/**/*.h
+            !src/x64/Release/**/*.lib
+            !src/x64/Release/**/*.exp
+            baseline-artifact/**
