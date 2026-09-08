@@ -7,8 +7,8 @@ Repository: guy-halevy/AR-PC-2-phone. Evidence updated 2026-09-08.
 | Shared C++ math | 339 checks pass locally and in Linux CI |
 | Diagnostic protocol | 15 tests pass locally and on [Windows CI](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34193762726) |
 | Desktop+ v3.6 baseline | [Release x64 build passed](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34193762666); binaries and corresponding source uploaded |
-| PhoneVR baseline | SDK/tool setup and pinned Cardboard build passed; native client compilation running |
-| Matching ALVR 20.8.0 streamer | Windows native compilation running |
+| PhoneVR baseline | SDK/tool setup, pinned Cardboard and arm64 ALVR library compiled; corrected APK pipeline running |
+| Matching ALVR 20.8.0 streamer | Native streamer and dashboard compiled in [run 34194694696](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34194694696); packaging filename corrected, upload run in progress |
 | ARCore-to-SteamVR integration | Not implemented; gated on baseline runtime |
 | MediaPipe/PnP hands | Not implemented; gated on the 6-DoF slice |
 | Desktop+ adapter / Windows touch | Design and shared geometry only |
@@ -26,3 +26,5 @@ Repository: guy-halevy/AR-PC-2-phone. Evidence updated 2026-09-08.
 The brief requires the unmodified stereo stack to run before ARCore work, and real 6-DoF movement before hands. CI has no connected phone, headset, Windows gaming GPU or interactive SteamVR desktop. Compilation and synthetic protocol tests cannot satisfy those checks.
 
 The initial local-environment failures are preserved in the historical M0 audit. This file tracks subsequent GitHub work. Baseline artifacts are development components and must not be presented as the finished PhoneXR product.
+
+Runtime procedure and unfilled results: [BASELINE_ACCEPTANCE.md](BASELINE_ACCEPTANCE.md).
