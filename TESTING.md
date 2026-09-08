@@ -12,6 +12,7 @@ Verified locally on Linux with g++ 13.3.0 and Python. Reproduce using `python to
 | PhoneVR Android APK | PASS | [CI run](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34195739292): Cardboard, ALVR native client, APK assembly, native payload and signature verification |
 | ALVR Windows native build | PASS | [CI run](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34195828548): streamer/dashboard compilation and source packaging |
 | Desktop+ v3.6 Release x64 | PASS on windows-2022 | [CI build and source artifact](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34193762666); no desktop runtime test |
+| Android emulator startup | PASS on API34 x86_64 | [Run 34230007065](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34230007065): installs, shows launcher, opens native ALVR activity and reaches Cardboard viewer setup without a detected crash; explicit foreground assertion and app-process crash checks passed |
 | External second opinion | UNAVAILABLE | Both `codex` and `agy` commands absent; no external review completed |
 
 Native build progress after the local audit is tracked in [STATUS.md](docs/STATUS.md). SteamVR, mounted-phone camera, and actual device tests remain unrun.

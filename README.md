@@ -11,6 +11,7 @@ The goal is an Android phone headset and Windows spatial desktop with world-fixe
 - Dependency-free C++17 rigid transforms, calibrated anchor/HMD composition, camera-axis conversion, and panel UV geometry.
 - Python 3.10+ authenticated 100-byte diagnostic pose packets, sequence/session checks, a receipt watchdog, and synthetic UDP replay.
 - Automated math, protocol, and loopback tests. Run `python tools/run_checks.py` with a C++17 compiler available.
+- An Android emulator test for APK installation, launcher visibility and native ALVR startup through viewer setup. See [test coverage](docs/ANDROID_STARTUP_TEST.md).
 
 Read [M0 feasibility](docs/M0_FEASIBILITY.md), [architecture](ARCHITECTURE.md), [build instructions](BUILDING.md), [test evidence](TESTING.md), and [roadmap](ROADMAP.md).
 

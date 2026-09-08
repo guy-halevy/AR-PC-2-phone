@@ -42,3 +42,9 @@ Open a successful run above and download its named artifact from the Artifacts s
 Android payload: PhoneVR-v2.0.0-beta-noGvr-debug.apk, 22,464,107 bytes. SHA256: `84310c60675f857fa1ff24fd6fff7086a2d63b406108d98898e2dccb31a27ab8`. APK v2 signature verification passed. The archive contains the expected AArch64 ELF libraries: native-lib-alvr, alvr_client_core and GfxPluginCardboard. This is debug signed and retains upstream analytics; it is not a privacy-complete PhoneXR release.
 
 The preparation regression was reproduced and fixed: replacement text was a substring of the original for CPU targets and ZXing, causing an early return. The repaired patterns were applied to exact pinned source, checked for arm64-only/stable-ZXing/API26/locked-dependency output, and applied again to verify idempotence. The subsequent full APK build passed.
+
+## Automated startup testing
+
+[Run 34229435053](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34229435053) passed on Android 14/API34 x86_64: APK installation, launcher visibility, native ALVR activity creation and ten seconds of process survival. The observed foreground screen was Cardboard QrCodeCaptureActivity, the expected first-run viewer setup. This did not test streaming or physical tracking. [Run 34230007065](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34230007065) also passed the stricter assertion requiring ALVR or that exact viewer-setup screen, with crash checking scoped to the app process. Screenshots, UI/activity evidence and logs are attached to the run. Screenshots were captured in CI; a separate visual design review was not performed.
+
+The arm64 phone baseline also rebuilt successfully in [run 34229435130](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34229435130) after the build scripts gained explicit ABI selection. See [startup coverage](ANDROID_STARTUP_TEST.md).
