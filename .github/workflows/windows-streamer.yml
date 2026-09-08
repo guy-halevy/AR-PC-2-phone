@@ -45,7 +45,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          if (!(Test-Path build/alvr_streamer_windows/alvr_dashboard.exe)) { throw 'Dashboard missing' }
+          if (!(Test-Path 'build/alvr_streamer_windows/ALVR Dashboard.exe')) { throw 'Dashboard missing' }
           if (!(Test-Path build/alvr_streamer_windows/bin/win64/driver_alvr_server.dll)) { throw 'Driver missing' }
           New-Item -ItemType Directory -Force baseline-artifact
           git diff --binary | Out-File baseline-artifact/build-lockfile.patch -Encoding utf8
