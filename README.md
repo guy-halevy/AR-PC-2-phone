@@ -2,9 +2,9 @@
 
 **Development checkpoint — not an installable XR product.**
 
-The goal is an Android phone headset and Windows spatial desktop with world-fixed panels and direct hand touch. This repository contains a source-level feasibility audit and supplies tested coordinate math and a diagnostic pose transport. It does **not** include a working PhoneXR APK, Windows executable, Desktop+ patch, camera tracking, video stream, or input injection. Desktop+ now compiles on Windows and the protocol suite passes Windows CI. PhoneVR and the matching ALVR streamer are being built; the 6-DoF SteamVR vertical slice has not passed.
+The goal is an Android phone headset and Windows spatial desktop with world-fixed panels and direct hand touch. This repository contains a source-level feasibility audit and supplies tested coordinate math and a diagnostic pose transport. It does **not** include a working PhoneXR APK, Windows executable, Desktop+ patch, camera tracking, video stream, or input injection. Desktop+ now compiles on Windows and the protocol suite passes Windows CI. PhoneVR and the matching ALVR streamer also build successfully, with baseline downloads linked below. The 6-DoF SteamVR vertical slice has not passed.
 
-[Current build status and next gates](docs/STATUS.md)
+[Baseline downloads, verified build results, and next gates](docs/STATUS.md)
 
 ## What runs now
 

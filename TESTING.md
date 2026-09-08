@@ -9,8 +9,8 @@ Verified locally on Linux with g++ 13.3.0 and Python. Reproduce using `python to
 | Python tests | PASS, 15 tests | Protocol validation, HMAC tampering, session/sequence/timestamp rules, expiry, and replay |
 | Loopback network cases | PASS | Real local UDP receipt, synthetic motion and pause, watchdog amid invalid traffic |
 | Windows protocol suite | PASS, 15 tests on windows-2022 | [CI run](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34193762726); includes the injected oversized-error regression |
-| PhoneVR Android build | IN PROGRESS | CI compiled Cardboard and the arm64 ALVR library; APK assembly remains pending |
-| ALVR Windows native build | PASS, packaging retry pending | Streamer and dashboard compiled on windows-2022; initial output filename check failed |
+| PhoneVR Android APK | PASS | [CI run](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34195739292): Cardboard, ALVR native client, APK assembly, native payload and signature verification |
+| ALVR Windows native build | PASS | [CI run](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34195828548): streamer/dashboard compilation and source packaging |
 | Desktop+ v3.6 Release x64 | PASS on windows-2022 | [CI build and source artifact](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34193762666); no desktop runtime test |
 | External second opinion | UNAVAILABLE | Both `codex` and `agy` commands absent; no external review completed |
 

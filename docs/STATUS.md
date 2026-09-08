@@ -7,8 +7,8 @@ Repository: guy-halevy/AR-PC-2-phone. Evidence updated 2026-09-08.
 | Shared C++ math | 339 checks pass locally and in Linux CI |
 | Diagnostic protocol | 15 tests pass locally and on [Windows CI](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34193762726) |
 | Desktop+ v3.6 baseline | [Release x64 build passed](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34193762666); binaries and corresponding source uploaded |
-| PhoneVR baseline | SDK/tool setup, pinned Cardboard and arm64 ALVR library compiled; corrected APK pipeline running |
-| Matching ALVR 20.8.0 streamer | Native streamer and dashboard compiled in [run 34194694696](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34194694696); packaging filename corrected, upload run in progress |
+| PhoneVR baseline | [APK build and verification passed](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34195739292); APK and corresponding source uploaded |
+| Matching ALVR 20.8.0 streamer | [Windows build and packaging passed](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34195828548); dashboard, driver and source uploaded |
 | ARCore-to-SteamVR integration | Not implemented; gated on baseline runtime |
 | MediaPipe/PnP hands | Not implemented; gated on the 6-DoF slice |
 | Desktop+ adapter / Windows touch | Design and shared geometry only |
@@ -28,3 +28,17 @@ The brief requires the unmodified stereo stack to run before ARCore work, and re
 The initial local-environment failures are preserved in the historical M0 audit. This file tracks subsequent GitHub work. Baseline artifacts are development components and must not be presented as the finished PhoneXR product.
 
 Runtime procedure and unfilled results: [BASELINE_ACCEPTANCE.md](BASELINE_ACCEPTANCE.md).
+
+## Downloadable baseline artifacts
+
+Open a successful run above and download its named artifact from the Artifacts section. GitHub may require sign-in. Artifacts are retained for 14 days; the pinned workflows can rebuild them.
+
+| Artifact | Run | ZIP bytes |
+| --- | --- | --- |
+| PhoneVR-arm64-baseline | 34195739292 | 44,637,120 |
+| ALVR-v20.8.0-Windows-baseline | 34195828548 | 26,387,576 |
+| DesktopPlus-v3.6-baseline | 34193762666 | 6,400,851 |
+
+Android payload: PhoneVR-v2.0.0-beta-noGvr-debug.apk, 22,464,107 bytes. SHA256: `84310c60675f857fa1ff24fd6fff7086a2d63b406108d98898e2dccb31a27ab8`. APK v2 signature verification passed. The archive contains the expected AArch64 ELF libraries: native-lib-alvr, alvr_client_core and GfxPluginCardboard. This is debug signed and retains upstream analytics; it is not a privacy-complete PhoneXR release.
+
+The preparation regression was reproduced and fixed: replacement text was a substring of the original for CPU targets and ZXing, causing an early return. The repaired patterns were applied to exact pinned source, checked for arm64-only/stable-ZXing/API26/locked-dependency output, and applied again to verify idempotence. The subsequent full APK build passed.

@@ -4,7 +4,7 @@ No stage is complete solely because its source code exists. Follow the attached 
 
 | Stage | Exit evidence | Current state |
 | --- | --- | --- |
-| M0 baseline | Build PhoneVR, matching ALVR, and Desktop+; run unmodified stereoscopic stack | IN PROGRESS; Desktop+ compiled, shared tests passed on Linux/Windows, phone and streamer builds underway |
+| M0 baseline | Build PhoneVR, matching ALVR, and Desktop+; run unmodified stereoscopic stack | ALL THREE BUILDS PASS; actual stereo runtime not tested |
 | M1 head pose | ARCore drives both head and stereo views; real 30–50 cm lean visible in SteamVR | NOT IMPLEMENTED |
 | M2 hands | Same-camera MediaPipe, two hands, timestamped debug skeleton | GATED ON M1 |
 | M3 hand depth | PnP with measured reprojection, metric depth error and calibration | GATED ON M1 |
@@ -18,7 +18,7 @@ No stage is complete solely because its source code exists. Follow the attached 
 
 ## Immediate next engineering work
 
-1. Finish the Android and matching ALVR Windows CI builds. JDK/SDK/NDK/Rust tools are installed in CI; pinned Cardboard now compiles.
+1. Download the three successful baseline artifacts linked in docs/STATUS.md; all native builds and APK payload/signature checks pass.
 2. Run the compiled PhoneVR/ALVR 20.8.0/Desktop+ stack using the actual phone and GPU; record stereo and head-rotation evidence.
 3. Record phone model, Android/ROM, ARCore availability, camera exposure when mounted, GPU, Windows version, and network link. No purchase is assumed or required by this checkpoint.
 4. Implement ARCore lifecycle and a synchronized native pose snapshot in the existing client. Gate MediaPipe until the real 6-DoF movement test passes.
