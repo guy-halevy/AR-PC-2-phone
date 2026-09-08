@@ -1,47 +1,47 @@
-# Building the checkpoint
+# Building PhoneXR and its baselines
 
-This document distinguishes the portable development tools from the unbuilt XR application. There is no PhoneXR APK or Windows product installer to install yet.
+There is no finished PhoneXR APK or Windows installer yet. The workflows build the upstream components required by Milestone 0. [Current results](docs/STATUS.md) distinguish compilation from runtime acceptance.
 
 ## Portable checks
 
-Requirements: Python 3.10+ and a C++17 `g++` or `clang++` compiler. There are no pip or npm dependencies for the protocol, replay, or native math tests.
+Requires Python 3.10+ and a C++17 g++ or clang++ compiler:
 
 ```sh
 python tools/run_checks.py
 ```
 
-Set `CXX` to a compiler executable if automatic detection is unsuitable. The runner writes `build/checks.log` and stops on a failed compilation or test. On Windows, a compatible MinGW/Clang compiler is required for this particular helper; it is not an MSVC build wrapper. Only Linux execution was verified here.
+Set CXX to select a compiler. The runner writes build/checks.log and fails on a compilation or test error. The separate windows-protocol.yml workflow runs the Python protocol suite on Windows Server 2022.
 
-The diagnostic replay command sequence is in [README.md](README.md). The HTML Code Lab can be opened directly in a browser; only JavaScript examples are enabled, using local browser execution.
+## Native builds on GitHub
 
-## Pinned upstream baseline
+Open the repository's Actions tab and select the corresponding workflow. Pushes to each workflow trigger it, and workflow_dispatch permits a manual run. Successful runs expose a downloadable artifact for 14 days. These are baseline development packages; SteamVR and device operation are not certified by compilation.
 
-The source audit cloned PhoneVR and Desktop+ and initialized PhoneVR's submodules. The selected source revisions are recorded in `upstream-lock.json`; no binary build success is implied by a successful clone.
+| Workflow | Build | Packaged evidence |
+| --- | --- | --- |
+| Windows DesktopPlus baseline | Desktop+ v3.6, MSBuild Release x64 on windows-2022 | Binaries, source archive, GPL license |
+| Windows ALVR matching streamer | ALVR 20.8.0 revision embedded in PhoneVR, Rust 1.85.1 | Dashboard/driver, source, lockfile patch, MIT license |
+| Android PhoneVR baseline | PhoneVR arm64 noGvr debug, native ALVR client, pinned Cardboard | APK when successful, corresponding source, preparation script, notices |
 
-Use `python tools/fetch_upstreams.py` to fetch those revisions into a new `third_party/` directory. Existing directories are verified and never reset. This helper fetches source only; it does not run upstream scripts, install software, change firewall rules, or start VR.
+All checkout and upload actions are pinned to commit SHAs with read-only repository permissions. No signing secrets are needed for these debug builds.
 
-### PhoneVR / ALVR
+### Android
 
-The inspected [PhoneVR build](https://github.com/PhoneVR-Developers/PhoneVR/blob/7fdcebee4a662eb8a1c7a8b19774aac71820a772/code/mobile/android/PhoneVR/app/build.gradle) uses SDK 34, target SDK 33, minimum SDK 24, NDK `25.2.9519653`, Kotlin `1.9.0`, Android Gradle plugin `8.3.1`, and [Gradle 8.7](https://github.com/PhoneVR-Developers/PhoneVR/blob/7fdcebee4a662eb8a1c7a8b19774aac71820a772/code/mobile/android/PhoneVR/gradle/wrapper/gradle-wrapper.properties). JDK 17 is the baseline used by upstream CI.
+The workflow installs JDK 17, SDK 34, NDK 25.2.9519653, Rust 1.85.1, cargo-ndk 3.5.4 and cbindgen 0.26.0. It uses each pinned project's Gradle wrapper. Run scripts/prepare_phonevr_baseline.py only on disposable checkouts at the documented revisions; it checks its source patterns before edits. See [Android build notes](docs/android-baseline-notes.md).
 
-Before a reproducible build, supply Android SDK/NDK, compatible Rust Android targets, and the matching ALVR/Cardboard native libraries. The [upstream preparation script](https://github.com/PhoneVR-Developers/PhoneVR/blob/7fdcebee4a662eb8a1c7a8b19774aac71820a772/code/mobile/android/PhoneVR/prepare-alvr-deps.sh) runs `cargo update` and fetches a moving Cardboard master. A reproducible fork must pin these inputs rather than relabel that script as a locked installer.
+The first artifact supports arm64 Android API 26+, retains upstream analytics, and uses debug signing. It adds no ARCore or hands. The upstream moving preparation script is not run.
 
-The attempted unmodified Android target was:
+### Matching Windows streamer
 
-```sh
-./gradlew :app:assembleNoGvrDebug --no-daemon --console=plain
-```
-
-The wrapper could not download using the Java networking path in this workspace. A checksum-verified local JDK and Gradle distribution recovered configuration; the build then stopped resolving Spotless `6.20.0`. See `docs/android-build-local-gradle.log`. No APK was generated. The missing Android SDK/NDK and Rust/native prerequisites remain additional gates after that resolution issue.
-
-ALVR's pinned Rust project was inspected and a build invocation attempted; `cargo` is unavailable in this environment. This is a blocked attempt, not a compilation failure in ALVR source. See `docs/alvr-build.log`.
+The workflow builds the standard Windows streamer without optional GPL FFmpeg support. This avoids the upstream dependency helper's moving FFmpeg download. It changes the xtask reproducible argument to enforce the existing Cargo.lock and includes that patch with the source archive.
 
 ### Desktop+
 
-The documented upstream build uses Visual Studio on Windows with C++/WinRT and the Windows SDK. This Linux workspace has neither MSBuild nor a Windows desktop/SteamVR session. The attempted `msbuild src/DesktopPlus.sln /p:Configuration=Release /p:Platform=x64` cannot launch. See [upstream build requirements](https://github.com/elvissteinjr/DesktopPlus/blob/v3.6/README.md) and `docs/desktopplus-build.log`.
+The workflow restores the pinned source's NuGet dependencies and builds src/DesktopPlus.sln with MSBuild. See [upstream requirements](https://github.com/elvissteinjr/DesktopPlus/blob/v3.6/README.md). This component still has no PhoneXR metadata or hand-touch bridge.
 
-## Future release packaging
+## Local baseline source
 
-After M0/M1 and device tests pass, produce a signed Android APK and a tested Windows companion package from pinned source. Keep signing credentials outside the repository and archive. Provide matching source/license notices for derivatives. Verify APK installation and launch on the actual Android device; verify Windows capture/input on its desktop session. None of these release steps has been completed.
+Run python tools/fetch_upstreams.py to fetch the upstream-lock.json revisions. Existing directories are verified and never reset. The helper does not install dependencies or launch VR. Initial Linux-only build attempts were blocked by local Java networking and missing native toolchains; GitHub Windows and Android builds supersede those environment limitations.
 
-The GitHub workflow supplied here tests only the portable checkpoint. It has not been executed on GitHub in this conversation, and is not an Android or Windows release pipeline.
+## Release gate
+
+A release requires the real phone and Windows GPU to pass stereo streaming before ARCore integration, then the 6-DoF and hand acceptance tests. Production APK signing must use a stable privately held key; upstream test keys are not release identities. Package corresponding source and license notices with all derivatives.

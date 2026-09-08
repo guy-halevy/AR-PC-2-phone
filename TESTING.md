@@ -8,14 +8,13 @@ Verified locally on Linux with g++ 13.3.0 and Python. Reproduce using `python to
 | Coordinate/UV tests | PASS, 339 deterministic checks | Numerical composition, inverse, calibration, camera axes, transformed/scaled corners, invalid input |
 | Python tests | PASS, 15 tests | Protocol validation, HMAC tampering, session/sequence/timestamp rules, expiry, and replay |
 | Loopback network cases | PASS | Real local UDP receipt, synthetic motion and pause, watchdog amid invalid traffic |
-| Windows oversized packet regression | FAIL reproduced before fix; PASS after fix | Modeled Winsock error no longer exits receiver; not an actual Windows run |
-| Code Lab | JavaScript parses; 3 examples execute with expected output in Node | Example syntax and computation; browser visual/interaction QA unavailable |
+| Windows protocol suite | PASS, 15 tests on windows-2022 | [CI run](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34193762726); includes the injected oversized-error regression |
 | PhoneVR Android build | BLOCKED | Local Gradle reaches configuration, then cannot resolve Spotless 6.20.0 |
 | ALVR build | BLOCKED | `cargo` absent |
-| Desktop+ build | BLOCKED | MSBuild/Windows runtime absent |
+| Desktop+ v3.6 Release x64 | PASS on windows-2022 | [CI build and source artifact](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34193762666); no desktop runtime test |
 | External second opinion | UNAVAILABLE | Both `codex` and `agy` commands absent; no external review completed |
 
-The HTML browser QA attempt could not launch because the Chromium executable is absent. This package does not claim a visual QA pass. Native Android, Windows, SteamVR, and camera tests were not run.
+Native build progress after the local audit is tracked in [STATUS.md](docs/STATUS.md). SteamVR, mounted-phone camera, and actual device tests remain unrun.
 
 ## Product acceptance — all pending
 

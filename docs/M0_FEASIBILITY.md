@@ -1,3 +1,5 @@
+> Historical local feasibility audit. Subsequent GitHub build evidence is tracked in [STATUS.md](STATUS.md).
+
 # PhoneXR — Milestone 0 feasibility audit
 
 **Date:** 2026-09-07  
@@ -60,6 +62,6 @@ PhoneVR itself is GPL v3, as is Desktop+; ALVR is MIT. Keep forks and original c
 
 ## Decision and next gate
 
-Continue with the pinned reuse architecture. Do not implement the hand stack or claim install-only completion until the baseline and real ARCore-to-SteamVR 6-DoF slice pass. The next concrete need is an Android-capable build environment plus a Windows build/test environment and the actual device model. An explicitly selected GitHub repository could provide a place for native build workflows; no target repository was supplied or modified in this session.
+Continue with the pinned reuse architecture. Do not implement the hand stack or claim install-only completion until the baseline and real ARCore-to-SteamVR 6-DoF slice pass. The next concrete need is an Android-capable build environment plus a Windows build/test environment and the actual device model. The user subsequently selected guy-halevy/AR-PC-2-phone. Native workflows now run there; see STATUS.md for observed results.
 
 Research stopped after upstream interfaces and consequential risks had primary support and build attempts exposed the current practical gates. Remaining evidence gaps are binary builds, Android dependency/model compatibility, mounted-phone camera/decoder concurrency, physical tracking accuracy, capture/input behavior, and all 14 MVP tests. These are listed as unresolved, not inferred successes.
