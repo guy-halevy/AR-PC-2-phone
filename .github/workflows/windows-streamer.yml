@@ -1,0 +1,70 @@
+name: Windows ALVR matching streamer
+on:
+  push:
+    paths:
+      - '.github/workflows/windows-streamer.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  streamer:
+    runs-on: windows-2022
+    timeout-minutes: 60
+    env:
+      CARGO_BUILD_JOBS: '3'
+      CARGO_TERM_COLOR: always
+    steps:
+      - name: Checkout the ALVR revision embedded in PhoneVR
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: alvr-org/ALVR
+          ref: 1d121fa7e0761ef26473c6b3f3fbd9b6051ce033
+          submodules: recursive
+          persist-credentials: false
+      - name: Set up pinned Rust
+        shell: pwsh
+        run: |
+          rustup toolchain install 1.85.1 --profile minimal
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          rustup default 1.85.1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          "LIBCLANG_PATH=C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Require the upstream dependency lockfile
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('alvr/xtask/src/main.rs')
+          source = path.read_text()
+          before = 'build::build_streamer(profile, true, gpl, None, false, profiling, keep_config)'
+          after = 'build::build_streamer(profile, true, gpl, None, true, profiling, keep_config)'
+          assert source.count(before) == 1, 'Pinned source changed'
+          path.write_text(source.replace(before, after))
+      - name: Build native streamer and dashboard
+        run: cargo run --locked -p alvr_xtask -- build-streamer --release
+      - name: Check outputs and package corresponding source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if (!(Test-Path build/alvr_streamer_windows/alvr_dashboard.exe)) { throw 'Dashboard missing' }
+          if (!(Test-Path build/alvr_streamer_windows/bin/win64/driver_alvr_server.dll)) { throw 'Driver missing' }
+          New-Item -ItemType Directory -Force baseline-artifact
+          git diff --binary | Out-File baseline-artifact/build-lockfile.patch -Encoding utf8
+          git archive --format=zip --prefix=ALVR-source/ -o baseline-artifact/ALVR-source.zip HEAD
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Copy-Item LICENSE baseline-artifact/LICENSE-ALVR.txt
+          @'
+          ALVR v20.8.0 baseline matching PhoneVR's pinned native client.
+          Source: 1d121fa7e0761ef26473c6b3f3fbd9b6051ce033
+          Rust 1.85.1; upstream Cargo.lock enforced by included patch.
+          Standard Windows build without optional GPL FFmpeg features.
+          This is not a PhoneXR release. SteamVR and hardware testing remain required.
+          '@ | Set-Content baseline-artifact/BASELINE-STATUS.txt
+      - name: Upload streamer and source
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ALVR-v20.8.0-Windows-baseline
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            build/alvr_streamer_windows/**
+            baseline-artifact/**
