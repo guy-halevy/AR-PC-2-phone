@@ -4,6 +4,7 @@ on:
     paths:
       - '.github/workflows/android-baseline.yml'
       - 'scripts/prepare_phonevr_baseline.py'
+      - 'scripts/verify_baseline_apk.py'
   workflow_dispatch:
 permissions:
   contents: read
@@ -70,6 +71,14 @@ jobs:
       - name: Build arm64 baseline APK
         working-directory: third_party/PhoneVR/code/mobile/android/PhoneVR
         run: bash gradlew :app:assembleNoGvrDebug -x buildClientLib --no-daemon --console=plain
+      - name: Verify APK native libraries and signature
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk_dir=third_party/PhoneVR/code/mobile/android/PhoneVR/app/build/outputs/apk/noGvr/debug
+          python scripts/verify_baseline_apk.py "$apk_dir" --report baseline-artifact/apk-verification.json
+          "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --verbose "$apk_dir"/*.apk
+          "$ANDROID_HOME/build-tools/34.0.0/aapt" dump badging "$apk_dir"/*.apk > baseline-artifact/apk-badging.txt
       - name: Package corresponding source and build record
         shell: bash
         run: |

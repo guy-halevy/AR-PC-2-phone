@@ -56,9 +56,21 @@
     }
   },
   "reproducibility_gaps": [
-    "PhoneVR prepare-alvr-deps.sh uses moving Cardboard master",
-    "PhoneVR preparation invokes cargo update",
-    "PhoneVR Gradle includes a ZXing SNAPSHOT dependency",
-    "Android SDK, NDK, Rust/native dependencies and MediaPipe/model artifacts are not resolved by this lock"
-  ]
+    "Upstream moving preparation script is bypassed by the project workflows; build repairs are in scripts/prepare_phonevr_baseline.py",
+    "Gradle and NuGet transitive dependencies do not yet have project-level dependency verification manifests",
+    "MediaPipe model and ARCore integration dependencies are not yet part of a built product"
+  ],
+  "baseline_build_inputs": {
+    "Cardboard": {
+      "url": "https://github.com/nift4/cardboard",
+      "commit": "13bc289daaf89e77fea76c616a15d85e7b2e91aa"
+    },
+    "rust": "1.85.1",
+    "cargo_ndk": "3.5.4",
+    "cbindgen": "0.26.0",
+    "android_sdk": 34,
+    "android_ndk": "25.2.9519653",
+    "baseline_android_min_api": 26,
+    "android_abi": "arm64-v8a"
+  }
 }

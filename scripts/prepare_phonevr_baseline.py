@@ -4,6 +4,8 @@ from pathlib import Path
 
 
 def replace_once(path, before, after):
+    if after in before:
+        raise ValueError("Replacement must distinguish patched from original source")
     text = path.read_text()
     if after in text:
         return
@@ -19,14 +21,14 @@ def main():
     args = parser.parse_args()
     project = args.phonevr / "code/mobile/android/PhoneVR"
     app = project / "app/build.gradle"
-    replace_once(app, "io.github.zxing-cpp:android:2.3.0-SNAPSHOT",
-                 "io.github.zxing-cpp:android:2.3.0")
+    replace_once(app, "'io.github.zxing-cpp:android:2.3.0-SNAPSHOT'",
+                 "'io.github.zxing-cpp:android:2.3.0'")
     replace_once(app, "minSdkVersion 24", "minSdkVersion 26")
     replace_once(app, "    defaultConfig {\n", "    defaultConfig {\n        ndk { abiFilters 'arm64-v8a' }\n")
     native = project / "ALVR/alvr/xtask/src/build.rs"
     replace_once(native,
-                 '        "arm64-v8a",\n        "-t",\n        "armeabi-v7a",\n        "-t",\n        "x86_64",\n        "-t",\n        "x86",',
-                 '        "arm64-v8a",')
+                 '        "arm64-v8a",\n        "-t",\n        "armeabi-v7a",\n        "-t",\n        "x86_64",\n        "-t",\n        "x86",\n        "-p",',
+                 '        "arm64-v8a",\n        "-p",')
     replace_once(native, 'let mut rust_flags = vec![];',
                  'let mut rust_flags = vec!["--locked"];')
     sdk = args.cardboard / "sdk/build.gradle"
