@@ -54,3 +54,9 @@ Evidence: altered ciphertext fails with InvalidTag and leaves the accepted seque
 Verdict: FALSE POSITIVE for this specific unkeyed accepted-hand-state claim under the stated no-key threat model. This does not cover a stolen pairing URI, malicious authenticated phone, compromised PC, cryptographic-library compromise, or absolute network freshness. The relative timestamp filter cannot establish the true age of the first received packet. There is no independent clock synchronization/challenge protocol, so this build is not certified for hostile-network freshness.
 
 The native snapshot regression includes the actual production header with narrow JNI/Cardboard test doubles. It checks capture-time preservation, stale/future-time rejection, frozen rendering, recovery, invalid pose rejection and Cardboard fallback. It does not emulate ARCore, ALVR prediction, GPU rendering or physical tracking.
+
+### Native dependency loading defects caught by strict tests
+
+Run 34363342655 executed four selected tests and correctly failed: OpenCV attempted to load `libopencv_java4100.so`, while the official Android AAR contains `libopencv_java4.so`; MediaPipe 0.10.14 contains ARM64, ARMv7 and x86 libraries but no x86_64 library. The production OpenCV call now uses its actual Android library name. The component fixture runs the same production Java sources/model on API30 x86, and the arm64 APK verifier additionally requires OpenCV, MediaPipe, ARCore and the exact model. This is an explicit change of component-test architecture, not a claim that MediaPipe works on x86_64 or that the full headset runtime was emulated.
+
+Direct AAR archive inspection established those filenames/ABIs. Previous compile-only PhoneXR APKs must not be used as evidence of working hand inference because the OpenCV loader defect also affected the phone path.

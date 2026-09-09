@@ -6,4 +6,4 @@
 
 The derivative removes Firebase dependencies/plugin and disables upstream crash-reporter initialization and app backup. It retains PhoneVR's native streaming and Cardboard optics. Camera-to-eye calibration, metric hand accuracy, thermal performance and physical stereo remain unverified. There is no completed hand-skeleton overlay or automated metric calibration.
 
-The integration workflow runs the four `XrInstrumentationTest` methods with failure propagation enabled. Upstream ALVR screenshot tests requiring a separate streaming setup are outside this component suite. See [status](../docs/STATUS.md) and [setup](../docs/DEVELOPMENT_SETUP.md).
+The `test-app` component fixture uses production Java sources on API30 x86, an ABI shipped by MediaPipe 0.10.14. It does not exercise the native ALVR/ARCore headset runtime. The integration workflow runs the four `XrInstrumentationTest` methods with failure propagation enabled. Upstream ALVR screenshot tests requiring a separate streaming setup are outside this component suite. See [status](../docs/STATUS.md) and [setup](../docs/DEVELOPMENT_SETUP.md).

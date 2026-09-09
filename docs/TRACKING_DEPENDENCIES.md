@@ -57,3 +57,5 @@ Measure inference latency, dropped frames, thermal behavior, pose stability, han
 ## Subsequent implementation evidence
 
 The pinned ARCore, MediaPipe and OpenCV combination compiled into the actual PhoneXR Android derivative in [run 34314584325](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34314584325). This supersedes the earlier uncertainty about whether the selected graph can build together. It does not replace a full dependency lock/inventory or hardware accuracy testing. The current strict model/geometry instrumentation result is tracked in STATUS.md; an earlier mixed upstream test run suppressed a failure and is excluded from all-tests-pass claims.
+
+The later strict Android test exposed an ABI constraint missed by the initial manifest-only inspection: MediaPipe 0.10.14 ships `jni/arm64-v8a`, `jni/armeabi-v7a` and `jni/x86`, but no `jni/x86_64`. OpenCV 4.10.0 ships all four and names its Android JNI library `libopencv_java4.so`. Direct inspection of the official AAR ZIP members established this. Phone delivery remains arm64; component tests use API30 x86. An explicit APK gate now checks the required arm64 hand/AR libraries and model hash.

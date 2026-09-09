@@ -20,7 +20,7 @@ Open the repository's Actions tab and select the corresponding workflow. Pushes 
 | --- | --- | --- |
 | Windows PhoneXR adapter and bridge | Patched Desktop+ v3.6 and packaged Python bridge | Executables, corresponding source, interaction test logs and notices |
 | Android PhoneXR development | ARCore/MediaPipe/OpenCV arm64 derivative | Debug APK, corresponding source and build record |
-| Android PhoneXR integration tests | API34 x86_64 component tests | JUnit XML, HTML report and required-test verification |
+| Android PhoneXR integration tests | API30 x86 component fixture using production Java sources | JUnit XML, HTML report and required-test verification |
 | Windows DesktopPlus baseline | Desktop+ v3.6, MSBuild Release x64 on windows-2022 | Binaries, source archive, GPL license |
 | Windows ALVR matching streamer | ALVR 20.8.0 revision embedded in PhoneVR, Rust 1.85.1 | Dashboard/driver, source, lockfile patch, MIT license |
 | Android PhoneVR baseline | PhoneVR arm64 noGvr debug, native ALVR client, pinned Cardboard | APK when successful, corresponding source, preparation script, notices |
@@ -54,3 +54,5 @@ The user authorized ARCore and hand implementation before physical stereo testin
 After baseline preparation, run `python scripts/prepare_phonexr.py PATH_TO_PHONEVR` on the disposable checkout. It checks patch anchors, copies the tracked Java/native/test sources, adds exact ARCore/MediaPipe/OpenCV dependencies and downloads the official hand model with SHA-256 verification. It removes upstream Firebase initialization/dependencies, disables crash-reporter initialization and app backup, and uses application ID `org.phonexr.client`.
 
 The development workflows run this integration automatically. Android instrumentation selects the four PhoneXR tests, propagates failures, and independently validates their JUnit XML. Upstream screenshot tests needing a streaming setup are not part of this component suite. See docs/REVIEW.md for the earlier inherited failure-suppression defect.
+
+The component test fixture under `android-client/test-app` uses the exact production Java sources and model on API30 x86. MediaPipe Tasks 0.10.14 does not ship an x86_64 native library. This fixture therefore tests the real model, OpenCV geometry, encryption and clock components on its supported emulator ABI, without claiming to execute the full ALVR/ARCore headset runtime. The separate arm64 APK gate checks all six required native libraries and the model hash.

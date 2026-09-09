@@ -11,7 +11,7 @@ Evidence updated 2026-09-09. The user's revised order implements AR and hands be
 | Encrypted hand protocol | v2 AES-GCM, random nonces, persistent sequence reservations, session/replay/schema checks |
 | Desktop+ adapter / Windows input | Native panel snapshot/mutation integration, touch release state machine and pinch manipulation; Windows binaries build |
 | Interaction regressions | 23 tests pass locally and on Windows CI, including authenticated reconnection after source-port changes |
-| Android instrumentation | Latest strict run is being checked; earlier run 34314584153 ignored an upstream failure and is not an all-tests-pass result |
+| Android instrumentation | Strict run 34363342655 caught OpenCV naming and MediaPipe emulator-ABI defects; fixes are under test in an API30 x86 component fixture |
 | Physical stereo, AR and hand accuracy | NOT RUN |
 | Rendered hand skeleton / visual hover cursor | Not completed |
 | Consumer installer / stable release signing | Not completed; current APK uses development debug signing |
@@ -20,8 +20,8 @@ Evidence updated 2026-09-09. The user's revised order implements AR and hands be
 
 Matching protocol-v2 build candidates:
 
-- [Android APK build](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34363796046)
-- [Android component test evidence](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34363796070)
+- [Android APK build](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34365142203)
+- [Android component test evidence](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34365142111)
 - [Windows Desktop+ and bridge build — passed](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34363983157): [download PhoneXR-Windows-development](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34363983157/artifacts/10109167247), 18,285,322 bytes. Patched native build, 23 tests and packaged --help check passed.
 
 Do not use an unfinished or failed run as a validated download. Check the run conclusion and artifact. The final results will be recorded after completion. Protocol v1 and v2 hand packages are incompatible.
