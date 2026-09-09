@@ -24,7 +24,9 @@ def drain(sock, receiver, peer):
             if getattr(error, 'winerror', None) == 10040:  # WSAEMSGSIZE: datagram discarded
                 continue
             raise
-        if peer is not None and source != peer:
+        # Android may reopen its UDP socket after process recreation. Keep the
+        # paired IP restriction, but authenticate a changed source port normally.
+        if peer is not None and source[0] != peer[0]:
             continue
         try:
             hands = receiver.decode(packet, time.monotonic()*1000)

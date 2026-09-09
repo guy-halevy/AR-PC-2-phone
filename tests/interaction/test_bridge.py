@@ -55,6 +55,22 @@ class ProtocolTests(unittest.TestCase):
         with self.assertRaises(InvalidTag): self.receiver.decode(packet[:-1]+bytes([packet[-1]^1]),200)
         self.assertEqual(self.receiver.sequence,-1)
         self.receiver.decode(packet,200)
+    def test_authenticated_sender_can_reopen_udp_port(self):
+        class Socket:
+            def __init__(self, packet): self.packet=packet
+            def recvfrom(self, size):
+                if self.packet is None: raise BlockingIOError()
+                packet,self.packet=self.packet,None
+                return packet,('127.0.0.1',40002)
+        packet=self.packet(2,sentMonoMs=time.monotonic()*1000)
+        latest,peer=drain(Socket(packet),self.receiver,('127.0.0.1',40001))
+        self.assertEqual(latest[0]['id'],'left')
+        self.assertEqual(peer,('127.0.0.1',40002))
+        bad=bytearray(self.packet(3,sentMonoMs=time.monotonic()*1000));bad[-1]^=1
+        latest,peer=drain(Socket(bytes(bad)),self.receiver,('127.0.0.1',40001))
+        self.assertIsNone(latest)
+        self.assertEqual(peer,('127.0.0.1',40001))
+
     def test_session_cannot_be_reset_remotely(self):
         packet=self.packet()
         with self.assertRaises(ValueError): self.receiver.decode(packet[:4]+b'x'*16+packet[20:],200)
