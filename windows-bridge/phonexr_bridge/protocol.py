@@ -12,7 +12,7 @@ def b64(value):
 
 class Receiver:
     def __init__(self, minimum_confidence=.65, maximum_reprojection=8.):
-        self.key, self.session, self.prefix = os.urandom(32), os.urandom(16), os.urandom(4)
+        self.key, self.session = os.urandom(32), os.urandom(16)
         self.cipher = AESGCM(self.key)
         self.sequence = -1
         self.offset = None
@@ -21,16 +21,16 @@ class Receiver:
         self.maximum_reprojection = maximum_reprojection
 
     def pairing_uri(self, host, port):
-        data = dict(v=1, host=host, port=port, key=b64(self.key), session=b64(self.session), noncePrefix=b64(self.prefix))
+        data = dict(v=2, host=host, port=port, key=b64(self.key), session=b64(self.session))
         return 'phonexr://pair?data=' + b64(json.dumps(data, separators=(',', ':')).encode())
 
     def decode(self, packet, now_ms):
-        if not 44 <= len(packet) <= 8192 or packet[:4] != b'PXH1' or packet[4:20] != self.session:
+        if not 56 <= len(packet) <= 8192 or packet[:4] != b'PXH2' or packet[4:20] != self.session:
             raise ValueError('session/header')
         seq = struct.unpack('>Q', packet[20:28])[0]
         if seq <= self.sequence:
             raise ValueError('replay')
-        data = json.loads(self.cipher.decrypt(self.prefix + packet[20:28], packet[28:], packet[:28]))
+        data = json.loads(self.cipher.decrypt(packet[28:40], packet[40:], packet[:40]))
         age, sent = data['ageMs'], data['sentMonoMs']
         if not all(type(v) in (float, int) and math.isfinite(v) for v in (age, sent)) or not 0 <= age <= 150 or sent < self.last_sent:
             raise ValueError('timestamp')

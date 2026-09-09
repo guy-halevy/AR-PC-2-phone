@@ -1,4 +1,5 @@
 import ctypes
+import os
 import json
 import socket
 import math
@@ -43,8 +44,8 @@ class ProtocolTests(unittest.TestCase):
     def packet(self,seq=1,**updates):
         data=dict(ageMs=5.,sentMonoMs=100.,hands=[hand()])
         data.update(updates)
-        header=b'PXH1'+self.receiver.session+struct.pack('>Q',seq)
-        return header+self.receiver.cipher.encrypt(self.receiver.prefix+header[20:28],json.dumps(data).encode(),header)
+        header=b'PXH2'+self.receiver.session+struct.pack('>Q',seq)+os.urandom(12)
+        return header+self.receiver.cipher.encrypt(header[28:40],json.dumps(data).encode(),header)
     def test_authenticated_roundtrip_replay_and_reordering(self):
         self.assertEqual(self.receiver.decode(self.packet(2),200)[0]['id'],'left')
         for seq in (2,1):

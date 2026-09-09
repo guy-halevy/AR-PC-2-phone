@@ -65,13 +65,13 @@ public class XrInstrumentationTest {
         }finally{image.close();bitmap.recycle();}
     }
     private String b64(byte[] bytes){return Base64.encodeToString(bytes,Base64.URL_SAFE|Base64.NO_PADDING|Base64.NO_WRAP);}
-    @Test public void senderEncryptsAndReservesNewNonceRangeAcrossInstances() throws Exception {
-        byte[] key=new byte[32],session=new byte[16],prefix=new byte[4];
-        SecureRandom random=new SecureRandom();random.nextBytes(key);random.nextBytes(session);random.nextBytes(prefix);
+    @Test public void senderEncryptsAndReservesNewSequenceRangeAcrossInstances() throws Exception {
+        byte[] key=new byte[32],session=new byte[16];
+        SecureRandom random=new SecureRandom();random.nextBytes(key);random.nextBytes(session);
         try(DatagramSocket socket=new DatagramSocket(0,InetAddress.getByName("127.0.0.1"))){
             socket.setSoTimeout(5000);
-            JSONObject fields=new JSONObject().put("v",1).put("host","127.0.0.1").put("port",socket.getLocalPort())
-                .put("key",b64(key)).put("session",b64(session)).put("noncePrefix",b64(prefix));
+            JSONObject fields=new JSONObject().put("v",2).put("host","127.0.0.1").put("port",socket.getLocalPort())
+                .put("key",b64(key)).put("session",b64(session));
             String uri="phonexr://pair?data="+b64(fields.toString().getBytes(StandardCharsets.UTF_8));
             PairingStore.save(context(),uri);assertEquals(uri,PairingStore.load(context()));
             long previous=-1;
@@ -85,15 +85,15 @@ public class XrInstrumentationTest {
                     assertTrue(sequence>previous);previous=sequence;
                     assertArrayEquals(session,Arrays.copyOfRange(bytes,4,20));
                     Cipher cipher=Cipher.getInstance("AES/GCM/NoPadding");
-                    byte[] nonce=ByteBuffer.allocate(12).put(prefix).putLong(sequence).array();
+                    byte[] nonce=Arrays.copyOfRange(bytes,28,40);
                     cipher.init(Cipher.DECRYPT_MODE,new SecretKeySpec(key,"AES"),new GCMParameterSpec(128,nonce));
-                    cipher.updateAAD(bytes,0,28);
-                    JSONObject decoded=new JSONObject(new String(cipher.doFinal(bytes,28,length-28),StandardCharsets.UTF_8));
+                    cipher.updateAAD(bytes,0,40);
+                    JSONObject decoded=new JSONObject(new String(cipher.doFinal(bytes,40,length-40),StandardCharsets.UTF_8));
                     assertEquals(0,decoded.getJSONArray("hands").length());
                     assertTrue(decoded.getDouble("ageMs")>=0);
                     bytes[length-1]^=1;
-                    cipher.init(Cipher.DECRYPT_MODE,new SecretKeySpec(key,"AES"),new GCMParameterSpec(128,nonce));cipher.updateAAD(bytes,0,28);
-                    try{cipher.doFinal(bytes,28,length-28);fail("Tampered packet authenticated");}catch(javax.crypto.AEADBadTagException expected){}
+                    cipher.init(Cipher.DECRYPT_MODE,new SecretKeySpec(key,"AES"),new GCMParameterSpec(128,nonce));cipher.updateAAD(bytes,0,40);
+                    try{cipher.doFinal(bytes,40,length-40);fail("Tampered packet authenticated");}catch(javax.crypto.AEADBadTagException expected){}
                 }finally{sender.close();}
             }
         }

@@ -34,6 +34,7 @@ def main():
     edit(gradle, "apply plugin: 'com.google.gms.google-services'", "// PhoneXR: no Firebase initialization or analytics plugin")
     edit(gradle, "    implementation platform('com.google.firebase:firebase-bom:26.0.0')\n    implementation 'com.google.firebase:firebase-analytics-ktx'", "    implementation 'com.google.ar:core:1.46.0'\n    implementation 'com.google.mediapipe:tasks-vision:0.10.14'\n    implementation 'org.opencv:opencv:4.10.0'\n    implementation 'com.google.guava:guava:32.1.3-android'")
     edit(gradle, '        applicationId "viritualisres.phonevr"', '        applicationId "org.phonexr.client"')
+    edit(gradle, 'ignoreFailures = true', 'ignoreFailures = false')
     manifest = app / 'src/main/AndroidManifest.xml'
     edit(manifest, 'android:name=".ErrorReporting"', 'android:name="android.app.Application"')
     edit(manifest, 'android:allowBackup="true"', 'android:allowBackup="false"')
