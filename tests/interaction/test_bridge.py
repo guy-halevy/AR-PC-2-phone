@@ -202,6 +202,26 @@ class AdapterTests(unittest.TestCase):
             self.assertIsNone(adapter.pending)
             self.assertEqual(adapter.send(*args, .6), 'sent')
 
+    def test_two_hand_rotation_and_scale_keep_offset_grab_anchored(self):
+        class RecordingAdapter:
+            pending = None
+            def send(self, *args): self.args = args; return 'sent'
+        adapter = RecordingAdapter(); manipulator = Manipulator(adapter)
+        def pinch(x, y, hid):
+            h = hand(.02, x, hid)
+            h['landmarks'][8][1] = y
+            h['landmarks'][4] = h['landmarks'][8][:]
+            return h
+        snapshot = dict(sessionId='1', panels=[panel()])
+        self.assertTrue(manipulator.frame([pinch(-.48, .1, 'left'), pinch(.12, .1, 'right')], snapshot, 0))
+        # Double the span and rotate 90 degrees around the same off-center midpoint.
+        self.assertTrue(manipulator.frame([pinch(-.18, -.5, 'left'), pinch(-.18, .7, 'right')], snapshot, .04))
+        self.assertAlmostEqual(adapter.args[5][2], 1.)  # unchanged normal
+        self.assertAlmostEqual(adapter.args[6], 2.)
+        self.assertAlmostEqual(adapter.args[2][0], .02)
+        self.assertAlmostEqual(adapter.args[2][1], .46)
+        self.assertAlmostEqual(adapter.args[2][2], 0.)
+
     def test_border_pinch_and_revision_checked_mutation(self):
         class RecordingAdapter:
             pending=None

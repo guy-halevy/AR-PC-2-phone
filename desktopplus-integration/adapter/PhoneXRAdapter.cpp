@@ -32,6 +32,13 @@ const char* ack_status = "none";
 std::wstring directory;
 ULONGLONG last_tick = 0;
 uint64_t UnixMs() { FILETIME t; GetSystemTimeAsFileTime(&t); ULARGE_INTEGER u; u.LowPart=t.dwLowDateTime; u.HighPart=t.dwHighDateTime; return (u.QuadPart-116444736000000000ULL)/10000; }
+// Desktop+ targets older Windows headers; resolve the Windows 10 API at runtime.
+// Zero deliberately disables window mapping when DPI cannot be established.
+UINT WindowDpi(HWND hwnd) {
+    using GetDpiForWindowFn = UINT (WINAPI*)(HWND);
+    static const auto get_dpi = reinterpret_cast<GetDpiForWindowFn>(GetProcAddress(GetModuleHandleW(L"user32.dll"), "GetDpiForWindow"));
+    return get_dpi ? get_dpi(hwnd) : 0;
+}
 bool PlainDirectory(const std::wstring& p) { DWORD a=GetFileAttributesW(p.c_str()); return a!=INVALID_FILE_ATTRIBUTES && (a&FILE_ATTRIBUTE_DIRECTORY) && !(a&FILE_ATTRIBUTE_REPARSE_POINT); }
 bool Init() {
     PWSTR local=nullptr;
@@ -104,7 +111,7 @@ std::string Panels(OutputManager& output) {
                 if(SUCCEEDED(DwmGetWindowAttribute(hwnd,DWMWA_EXTENDED_FRAME_BOUNDS,&bounds,sizeof(bounds))) &&
                    SUCCEEDED(DwmGetWindowAttribute(hwnd,DWMWA_CLOAKED,&cloaked,sizeof(cloaked))) && !cloaked) {
                     bx=bounds.left; by=bounds.top; bw=bounds.right-bounds.left; bh=bounds.bottom-bounds.top;
-                    dpi=GetDpiForWindow(hwnd); mapping=dpi!=0;
+                    dpi=WindowDpi(hwnd); mapping=dpi!=0;
                 }
             } else if(!hwnd && desktop>=0 && size_t(desktop)<output.GetDesktopRects().size()) {
                 const auto& b=output.GetDesktopRects()[desktop]; bx=b.GetTL().x; by=b.GetTL().y; bw=b.GetWidth(); bh=b.GetHeight(); mapping=true;

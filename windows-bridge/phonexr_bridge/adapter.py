@@ -117,13 +117,20 @@ class Manipulator:
         width = original['widthM']
         if len(old) == 2:
             a,b = sub(old[1],old[0]),sub(new[1],new[0])
-            if length(a) < .05 or length(b) < .05:
+            old_span = math.hypot(dot(a, right), dot(a, up))
+            new_span = math.hypot(dot(b, right), dot(b, up))
+            if old_span < .05 or new_span < .05:
                 self.clear()
                 return True
             angle = math.atan2(dot(b,up),dot(b,right))-math.atan2(dot(a,up),dot(a,right))
             c,s = math.cos(angle),math.sin(angle)
             right,up = tuple(c*r+s*u for r,u in zip(right,up)), tuple(-s*r+c*u for r,u in zip(right,up))
-            width = max(.1,min(5.,width*length(b)/length(a)))
+            width = max(.1,min(5.,width*new_span/old_span))
+            # Rotate/scale around the grab midpoint, retaining the grabbed surface points.
+            offset = sub(original['center'], old_mid)
+            scale = width/original['widthM']
+            rx, uy, nz = dot(offset, original['right']), dot(offset, original['up']), dot(offset, normal)
+            center = tuple(new_mid[k]+scale*(rx*right[k]+uy*up[k])+nz*normal[k] for k in range(3))
         try:
             status = self.adapter.send(snapshot,p,center,right,up,normal,width,now)
         except (OSError, ValueError, struct.error):
