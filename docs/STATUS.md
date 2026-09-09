@@ -1,18 +1,32 @@
 # Current implementation status
 
-Repository: guy-halevy/AR-PC-2-phone. Evidence updated 2026-09-08.
+Evidence updated 2026-09-09. The user's revised order implements AR and hands before real phone-to-PC stereo testing. Development source and binaries now exist; physical acceptance and a finished consumer installation flow remain pending.
 
-| Component | Observed evidence |
+| Component | Implementation and observed evidence |
 | --- | --- |
-| Shared C++ math | 339 checks pass locally and in Linux CI |
-| Diagnostic protocol | 15 tests pass locally and on [Windows CI](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34193762726) |
-| Desktop+ v3.6 baseline | [Release x64 build passed](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34193762666); binaries and corresponding source uploaded |
-| PhoneVR baseline | [APK build and verification passed](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34195739292); APK and corresponding source uploaded |
-| Matching ALVR 20.8.0 streamer | [Windows build and packaging passed](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34195828548); dashboard, driver and source uploaded |
-| ARCore-to-SteamVR integration | Not implemented; gated on baseline runtime |
-| MediaPipe/PnP hands | Not implemented; gated on the 6-DoF slice |
-| Desktop+ adapter / Windows touch | Design and shared geometry only |
-| Finished PhoneXR APK / Windows installer | Not available |
+| Shared math / diagnostic transport | 339 C++ checks and 15 Python tests pass locally and in CI |
+| Native AR snapshot | Capture-time, freshness, freeze/recovery and fallback regression passes locally and in portable CI |
+| ARCore-to-ALVR | Real Android lifecycle, calibrated origin and head/stereo-view hooks; arm64 derivative builds |
+| MediaPipe/OpenCV hands | Local two-hand model inference and PnP standing-space conversion compiled into the APK |
+| Encrypted hand protocol | v2 AES-GCM, random nonces, persistent sequence reservations, session/replay/schema checks |
+| Desktop+ adapter / Windows input | Native panel snapshot/mutation integration, touch release state machine and pinch manipulation; Windows binaries build |
+| Interaction regressions | 23 tests pass locally and on Windows CI, including authenticated reconnection after source-port changes |
+| Android instrumentation | Latest strict run is being checked; earlier run 34314584153 ignored an upstream failure and is not an all-tests-pass result |
+| Physical stereo, AR and hand accuracy | NOT RUN |
+| Rendered hand skeleton / visual hover cursor | Not completed |
+| Consumer installer / stable release signing | Not completed; current APK uses development debug signing |
+
+## Current development validation
+
+Matching protocol-v2 build candidates:
+
+- [Android APK build](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34363796046)
+- [Android component test evidence](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34363796070)
+- [Windows Desktop+ and bridge build — passed](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34363983157): [download PhoneXR-Windows-development](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34363983157/artifacts/10109167247), 18,285,322 bytes. Patched native build, 23 tests and packaged --help check passed.
+
+Do not use an unfinished or failed run as a validated download. Check the run conclusion and artifact. The final results will be recorded after completion. Protocol v1 and v2 hand packages are incompatible.
+
+[Development setup](DEVELOPMENT_SETUP.md) explains the PC companion, Android installation, pairing, calibration and outstanding physical checks. [Review record](REVIEW.md) distinguishes observed corrections from security claims. [Dependency research](TRACKING_DEPENDENCIES.md) explains the free/open-source hand components and ARCore licensing limit.
 
 ## Build repairs established by CI
 
@@ -21,9 +35,9 @@ Repository: guy-halevy/AR-PC-2-phone. Evidence updated 2026-09-08.
 - Pin Cardboard source, use stable ZXing, enforce ALVR Cargo.lock, and build arm64 with NDK r25c. The patched Cardboard SDK compiles.
 - Build the standard Windows ALVR configuration without optional GPL FFmpeg dependencies, avoiding the upstream helper's moving download.
 
-## Runtime gate
+## Physical acceptance
 
-The brief requires the unmodified stereo stack to run before ARCore work, and real 6-DoF movement before hands. CI has no connected phone, headset, Windows gaming GPU or interactive SteamVR desktop. Compilation and synthetic protocol tests cannot satisfy those checks.
+The user explicitly authorized implementing AR and hand interaction before physical stereo testing. CI has no connected physical phone/headset, Windows gaming GPU or interactive SteamVR desktop. Compilation and synthetic tests cannot certify those checks.
 
 The initial local-environment failures are preserved in the historical M0 audit. This file tracks subsequent GitHub work. Baseline artifacts are development components and must not be presented as the finished PhoneXR product.
 

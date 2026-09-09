@@ -8,7 +8,7 @@ For a future configured development environment, the Codex CLI installation comm
 
 ## Agentic Actions audit
 
-Analyzed all six project workflows: `portable-checks.yml`, `windows-protocol.yml`, `windows-baseline.yml`, `android-baseline.yml`, `windows-streamer.yml`, and `android-smoke.yml`. No AI action steps, local composite actions, reusable workflow calls, or AI CLI invocations were found. The workflow uses read-only repository access, disables persisted checkout credentials, pins checkout to the verified v4.2.2 commit, and runs fixed local commands. No untrusted event text is interpolated into shell code. This is a static scope result, not a general dependency audit. Actual CI results are linked in STATUS.md. The emulator workflow invokes a pinned Android emulator action and grants the ephemeral runner user access to its KVM device; it contains no AI integration.
+Analyzed all nine project workflows, including `android-phonexr.yml`, `android-phonexr-tests.yml` and `windows-phonexr.yml`, plus the earlier six: `portable-checks.yml`, `windows-protocol.yml`, `windows-baseline.yml`, `android-baseline.yml`, `windows-streamer.yml`, and `android-smoke.yml`. No AI action steps, local composite actions, reusable workflow calls, or AI CLI invocations were found. The workflow uses read-only repository access, disables persisted checkout credentials, pins checkout to the verified v4.2.2 commit, and runs fixed local commands. No untrusted event text is interpolated into shell code. This is a static scope result, not a general dependency audit. Actual CI results are linked in STATUS.md. The emulator workflow invokes a pinned Android emulator action and grants the ephemeral runner user access to its KVM device; it contains no AI integration.
 
 Also inspected the separate upstream workflow roots: four in PhoneVR and one in Desktop+. No AI action/CLI invocation or local/reusable workflow indirection was identified. The agentic-actions-specific audit therefore ends at its no-AI boundary; it is not a general security certification of those upstream pipelines or their third-party dependencies.
 
@@ -31,3 +31,26 @@ Verdict: **FALSE POSITIVE for the specific unauthenticated accepted-pose claim.*
 Windows `recvfrom` can raise WSAEMSGSIZE when a UDP datagram exceeds the buffer; Linux commonly returns truncated data. The original receiver only caught BlockingIOError, so the Windows error could stop the diagnostic process before protocol rejection. [Microsoft contract](https://learn.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-recvfrom).
 
 A regression modeled that exact Windows error while using a real loopback socket and verified a subsequent valid packet. It failed before the fix, then passed after the receiver began dropping WSAEMSGSIZE/EMSGSIZE within its bounded receive loop. Other socket failures still propagate. This is an error-handling correction; The 15-test suite subsequently passed on Windows Server 2022 in [run 34193762726](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34193762726). The oversized-error case remains explicitly injected for determinism; it is not a privilege-escalation finding.
+
+## Native integration review, 2026-09-09
+
+The requested external Codex/Antigravity review was attempted again on the new hand sender/receiver changes. Both executables remain unavailable (`FileNotFoundError`), so no external second-opinion verdict is claimed. The checks below are local source review and executable regressions.
+
+Confirmed corrections:
+
+- The upstream Android Gradle task set `ignoreFailures = true`. Run 34314584153 reported success despite a failed ALVR screenshot test. Its green status is not accepted as evidence that all tests passed. The derivative now sets false, selects the four PhoneXR component tests explicitly, and independently checks JUnit XML for all four successful, unskipped results. The upstream screenshot test needs a separate streaming setup and is outside this suite.
+- Protocol v1 derived the GCM nonce from a fixed prefix and persisted sequence. Clearing Android app data and reusing the same pairing could repeat those nonces. Protocol v2 authenticates a fresh random 96-bit nonce per packet instead; durable sequence blocks still provide restart-safe replay progression. Clearing app data requires a fresh PC session. This is a cryptographic lifecycle correction, not evidence of an observed exploit.
+- The original bridge pinned the sender's full UDP endpoint. An authenticated Android app restart could change source port and lose connectivity. The receiver now retains the IP restriction and authenticates the new port before updating the endpoint; valid and tampered reconnect regressions pass.
+- AR fallback is explicitly published before availability checks on resume, preventing a prior pause from leaving unsupported-AR devices stuck in the AR freeze state. Setup controls now scroll on short/landscape displays.
+
+### False-positive check: unkeyed hand-state injection
+
+Claim: a network sender without the pairing key can change accepted hand coordinates and drive the Windows input path.
+
+Trace: bounded UDP receive -> paired-IP check -> header/length/session -> sequence precheck -> AES-GCM authentication over header and ciphertext -> numeric, age, identity and landmark schema gates -> receiver state update -> current panel snapshot and explicit input-enable gates -> ContactEngine/Manipulator -> checked Windows sink or revision-checked Desktop+ command. The sequence and peer are updated only after successful authenticated decoding. No unauthenticated raw-coordinate branch was found in this path.
+
+Evidence: altered ciphertext fails with InvalidTag and leaves the accepted sequence unchanged; session mismatch and replay fail; a changed source port with invalid authentication cannot replace the peer. These regressions exercise the receiver/caller boundary. Sink tests model touch failures without injecting physical Windows input.
+
+Verdict: FALSE POSITIVE for this specific unkeyed accepted-hand-state claim under the stated no-key threat model. This does not cover a stolen pairing URI, malicious authenticated phone, compromised PC, cryptographic-library compromise, or absolute network freshness. The relative timestamp filter cannot establish the true age of the first received packet. There is no independent clock synchronization/challenge protocol, so this build is not certified for hostile-network freshness.
+
+The native snapshot regression includes the actual production header with narrow JNI/Cardboard test doubles. It checks capture-time preservation, stale/future-time rejection, frozen rendering, recovery, invalid pose rejection and Cardboard fallback. It does not emulate ARCore, ALVR prediction, GPU rendering or physical tracking.

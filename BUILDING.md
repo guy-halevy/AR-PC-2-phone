@@ -1,6 +1,6 @@
 # Building PhoneXR and its baselines
 
-There is no finished PhoneXR APK or Windows installer yet. The workflows build the upstream components required by Milestone 0. [Current results](docs/STATUS.md) distinguish compilation from runtime acceptance.
+The workflows build PhoneXR development APK/Windows packages and their pinned upstream baselines. There is no finished consumer installer yet. [Current results](docs/STATUS.md) distinguish compilation from runtime acceptance.
 
 ## Portable checks
 
@@ -14,10 +14,13 @@ Set CXX to select a compiler. The runner writes build/checks.log and fails on a 
 
 ## Native builds on GitHub
 
-Open the repository's Actions tab and select the corresponding workflow. Pushes to each workflow trigger it, and workflow_dispatch permits a manual run. Successful runs expose a downloadable artifact for 14 days. These are baseline development packages; SteamVR and device operation are not certified by compilation.
+Open the repository's Actions tab and select the corresponding workflow. Pushes to each workflow trigger it, and workflow_dispatch permits a manual run. Successful runs expose a downloadable artifact for 14 days. These are development packages; SteamVR and device operation are not certified by compilation.
 
 | Workflow | Build | Packaged evidence |
 | --- | --- | --- |
+| Windows PhoneXR adapter and bridge | Patched Desktop+ v3.6 and packaged Python bridge | Executables, corresponding source, interaction test logs and notices |
+| Android PhoneXR development | ARCore/MediaPipe/OpenCV arm64 derivative | Debug APK, corresponding source and build record |
+| Android PhoneXR integration tests | API34 x86_64 component tests | JUnit XML, HTML report and required-test verification |
 | Windows DesktopPlus baseline | Desktop+ v3.6, MSBuild Release x64 on windows-2022 | Binaries, source archive, GPL license |
 | Windows ALVR matching streamer | ALVR 20.8.0 revision embedded in PhoneVR, Rust 1.85.1 | Dashboard/driver, source, lockfile patch, MIT license |
 | Android PhoneVR baseline | PhoneVR arm64 noGvr debug, native ALVR client, pinned Cardboard | APK when successful, corresponding source, preparation script, notices |
@@ -36,7 +39,7 @@ The workflow builds the standard Windows streamer without optional GPL FFmpeg su
 
 ### Desktop+
 
-The workflow restores the pinned source's NuGet dependencies and builds src/DesktopPlus.sln with MSBuild. See [upstream requirements](https://github.com/elvissteinjr/DesktopPlus/blob/v3.6/README.md). This component still has no PhoneXR metadata or hand-touch bridge.
+The workflow restores the pinned source's NuGet dependencies and builds src/DesktopPlus.sln with MSBuild. See [upstream requirements](https://github.com/elvissteinjr/DesktopPlus/blob/v3.6/README.md). The separate Windows PhoneXR workflow applies `desktopplus-integration/prepare_desktopplus.py` before compilation and packages the real `windows-bridge` executable.
 
 ## Local baseline source
 
@@ -44,4 +47,10 @@ Run python tools/fetch_upstreams.py to fetch the upstream-lock.json revisions. E
 
 ## Release gate
 
-A release requires the real phone and Windows GPU to pass stereo streaming before ARCore integration, then the 6-DoF and hand acceptance tests. Production APK signing must use a stable privately held key; upstream test keys are not release identities. Package corresponding source and license notices with all derivatives.
+The user authorized ARCore and hand implementation before physical stereo testing. A release still requires the real phone and Windows GPU to pass stereo, 6-DoF and hand acceptance tests. Production APK signing must use a stable privately held key; upstream test keys are not release identities. Package corresponding source and license notices with all derivatives.
+
+## PhoneXR derivative preparation
+
+After baseline preparation, run `python scripts/prepare_phonexr.py PATH_TO_PHONEVR` on the disposable checkout. It checks patch anchors, copies the tracked Java/native/test sources, adds exact ARCore/MediaPipe/OpenCV dependencies and downloads the official hand model with SHA-256 verification. It removes upstream Firebase initialization/dependencies, disables crash-reporter initialization and app backup, and uses application ID `org.phonexr.client`.
+
+The development workflows run this integration automatically. Android instrumentation selects the four PhoneXR tests, propagates failures, and independently validates their JUnit XML. Upstream screenshot tests needing a streaming setup are not part of this component suite. See docs/REVIEW.md for the earlier inherited failure-suppression defect.
