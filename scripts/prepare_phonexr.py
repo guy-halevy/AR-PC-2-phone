@@ -28,6 +28,7 @@ def main():
     app = project / 'app'
     java = app / 'src/main/java/viritualisres/phonevr'
     shutil.copytree(repo / 'android-client/src/viritualisres/phonevr/xr', java / 'xr', dirs_exist_ok=True)
+    shutil.copytree(repo / 'android-client/tests/viritualisres/phonevr/xr', app / 'src/androidTest/java/viritualisres/phonevr/xr', dirs_exist_ok=True)
     shutil.copy2(repo / 'android-client/native/phonexr_pose.hpp', app / 'src/main/cpp/phonexr_pose.hpp')
     gradle = app / 'build.gradle'
     edit(gradle, "apply plugin: 'com.google.gms.google-services'", "// PhoneXR: no Firebase initialization or analytics plugin")
