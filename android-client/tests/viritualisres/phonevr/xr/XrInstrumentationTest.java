@@ -32,7 +32,7 @@ import org.opencv.core.Core;
 public class XrInstrumentationTest {
     private Context context(){return InstrumentationRegistry.getInstrumentation().getTargetContext();}
     @Test public void syntheticPnPRecoversStandingGeometryAndRejectsBadCalibration(){
-        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+        System.loadLibrary("opencv_java4");
         float[] model=new float[63],pixels=new float[42];
         float[] k={800,800,320,240},matrix={1,0,0,0,0,1,0,0,0,0,1,0,1,1.6f,2,1};
         for(int i=0;i<21;i++){

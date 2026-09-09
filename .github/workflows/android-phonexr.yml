@@ -80,7 +80,7 @@ jobs:
         run: |
           set -euo pipefail
           apk_dir=third_party/PhoneVR/code/mobile/android/PhoneVR/app/build/outputs/apk/noGvr/debug
-          python scripts/verify_baseline_apk.py "$apk_dir" --report baseline-artifact/apk-verification.json
+          python scripts/verify_baseline_apk.py "$apk_dir" --phonexr --report baseline-artifact/apk-verification.json
           "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --verbose "$apk_dir"/*.apk
           "$ANDROID_HOME/build-tools/34.0.0/aapt" dump badging "$apk_dir"/*.apk > baseline-artifact/apk-badging.txt
       - name: Package corresponding source and build record

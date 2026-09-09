@@ -94,7 +94,7 @@ public final class HandTracker implements AutoCloseable {
         try {
             synchronized (lock) { if (closed || generation != token) return; }
             if (landmarker == null) {
-                System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+                System.loadLibrary("opencv_java4");
                 BaseOptions base = BaseOptions.builder().setModelAssetPath("hand_landmarker.task")
                         .setDelegate(Delegate.CPU).build();
                 landmarker = HandLandmarker.createFromOptions(context,
