@@ -96,6 +96,8 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot -camera-back emulated
           script: cd third_party/PhoneVR/code/mobile/android/PhoneVR && bash gradlew :app:connectedNoGvrDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=viritualisres.phonevr.xr.XrInstrumentationTest -x buildClientLib -x spotlessCheck --no-daemon --console=plain
+      - name: Require all PhoneXR tests to execute and pass
+        run: python scripts/verify_android_tests.py third_party/PhoneVR/code/mobile/android/PhoneVR/app/build/outputs/androidTest-results
       - name: Upload instrumentation evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

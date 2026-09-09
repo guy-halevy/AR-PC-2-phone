@@ -1,7 +1,9 @@
-# Android integration status
+# Android PhoneXR development client
 
-No PhoneXR Android client is implemented or packaged in this checkpoint.
+`scripts/prepare_phonexr.py` applies checked hooks to the baseline-prepared, pinned PhoneVR checkout and copies this directory's Java/native implementation and instrumentation tests. CI builds a real `org.phonexr.client` arm64 APK.
 
-Extend the pinned PhoneVR sources after the unmodified build/runtime gate passes. Source hooks and frame/timing requirements are in [ARCHITECTURE.md](../ARCHITECTURE.md). Preserve ALVR decoding/Cardboard optics, replace both HMD and stereo-view pose paths, and remove upstream analytics before claiming local-only processing.
+`XrController` owns ARCore lifecycle, camera intrinsics and standing-space calibration. `HandTracker` runs local MediaPipe inference; `HandPoseEstimator` uses OpenCV PnP. `HandSender` sends authenticated derived landmarks, and `PairingStore` encrypts pairing material using Android KeyStore. `phonexr_pose.hpp` synchronizes head snapshots and preserves capture timestamps in ALVR.
 
-The diagnostic Python replay is not an Android implementation. Do not rename its source archive to `.apk` or use an unrelated upstream APK as a PhoneXR release.
+The derivative removes Firebase dependencies/plugin and disables upstream crash-reporter initialization and app backup. It retains PhoneVR's native streaming and Cardboard optics. Camera-to-eye calibration, metric hand accuracy, thermal performance and physical stereo remain unverified. There is no completed hand-skeleton overlay or automated metric calibration.
+
+The integration workflow runs the four `XrInstrumentationTest` methods with failure propagation enabled. Upstream ALVR screenshot tests requiring a separate streaming setup are outside this component suite. See [status](../docs/STATUS.md) and [setup](../docs/DEVELOPMENT_SETUP.md).

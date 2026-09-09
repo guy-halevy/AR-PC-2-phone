@@ -18,6 +18,12 @@ commands = [
     [str(executable)],
     [sys.executable, "-m", "unittest", "discover", "-s", "tests/protocol", "-p", "test_*.py", "-v"],
 ]
+native_executable = BUILD / ("test_xr_pose.exe" if os.name == "nt" else "test_xr_pose")
+commands += [
+    [compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror", "-pedantic", "-pthread",
+     str(ROOT / "tests/native/test_xr_pose.cpp"), "-o", str(native_executable)],
+    [str(native_executable)],
+]
 results = []
 for command in commands:
     result = subprocess.run(command, cwd=ROOT, text=True, stdout=subprocess.PIPE,

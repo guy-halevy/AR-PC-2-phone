@@ -1,6 +1,6 @@
 # Architecture
 
-Date: 2026-09-07. Target: Android + Windows. Status: source-verified design, with only the shared diagnostic components implemented.
+Updated: 2026-09-09. Target: Android + Windows. AR, hand and panel-input development implementations exist; physical acceptance remains pending. See docs/STATUS.md for observed evidence.
 
 ## Reuse decisions
 
@@ -51,22 +51,22 @@ The shipped diagnostic receiver only validates sender timestamp progression and 
 
 The inspected ALVR C pose structure has no invented tracking-valid flag. Gate unavailable poses and verify actual driver timeout behavior. Any future touch/manipulation component must release contacts on pause, missing hands, socket loss, window disappearance, and shutdown.
 
-## Hands — deliberately gated
+## Hands — development implementation
 
 Acquire images from ARCore rather than opening a competing camera owner. Close each image, retain matching pose/intrinsics/timestamp, and use bounded asynchronous inference. MediaPipe returns image landmarks, handedness, and hand-centered 3D geometry; that geometry is not AR world position. [ARCore ML integration](https://developers.google.com/ar/develop/java/machine-learning), [MediaPipe Android guide](https://developers.google.com/edge/mediapipe/solutions/vision/hand_landmarker/android).
 
-After the 6-DoF slice passes, estimate camera-relative hand pose with PnP, reject poor reprojection or negative-depth solutions, and assess personalized scale with real recordings. Reprojection agreement alone does not prove metric depth accuracy. The reference PnP design is experimental and unimplemented here. Direct fingertip contact remains the primary target; alternative gestures may supplement it only after measurement.
+The implemented pipeline estimates camera-relative hand pose with PnP, reject poor reprojection or negative-depth solutions, and assess personalized scale with real recordings. Reprojection agreement alone does not prove metric depth accuracy. The PnP implementation remains experimental until measured on real hands. Direct fingertip contact remains the primary target; alternative gestures may supplement it only after measurement.
 
 ## Panel input
 
-Transform world fingertip to panel local, apply physical dimensions and scale once, then compute `u=x/width+0.5`, `v=0.5-y/height`. Reject out-of-bounds/behind-panel approach before contact logic; clamp only valid edges. The shipped geometry function tests this invariant but is not a contact state machine.
+Transform world fingertip to panel local, apply physical dimensions and scale once, then compute `u=x/width+0.5`, `v=0.5-y/height`. Reject out-of-bounds/behind-panel approach before contact logic; clamp only valid edges. The Windows ContactEngine adds debounce, depth hysteresis and tracking-loss release to this geometry.
 
 Map UV through the actual validated capture crop and desktop pixel origin. Desktop+ window textures may include non-client frame content, so blindly mapping the whole panel to `GetClientRect` is wrong. Preserve crop, DWM capture bounds, client-in-capture bounds, monitor origin and DPI context. [Desktop+ input mapping](https://github.com/elvissteinjr/DesktopPlus/blob/v3.6/src/DesktopPlus/OutputManager.cpp).
 
-Future Windows input uses checked `InitializeTouchInjection`/`InjectTouchInput` calls and stable IDs. UP uses the preceding successful UPDATE's location; retryable failures must not advance logical state. Input is desktop-coordinate input, not guaranteed background-window delivery. Mouse fallback respects normal OS boundaries. [Touch injection](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-injecttouchinput), [SendInput restrictions](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-sendinput).
+Implemented Windows input uses checked `InitializeTouchInjection`/`InjectTouchInput` calls and stable IDs. UP uses the preceding successful UPDATE's location; retryable failures must not advance logical state. Input is desktop-coordinate input, not guaranteed background-window delivery. Mouse fallback respects normal OS boundaries. [Touch injection](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-injecttouchinput), [SendInput restrictions](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-sendinput).
 
 ## Privacy and interaction design
 
-Normal operation will process camera frames locally, without recording or raw-frame transmission. Upstream PhoneVR includes Firebase Analytics; remove it and associated initialization before a privacy-conforming derivative release. Keep tracking and error states visible.
+The new tracking pipeline processes camera frames locally, without recording or raw-frame transmission. The derivative preparation removes upstream Firebase dependencies and disables crash-reporter initialization. Keep tracking and error states visible.
 
-Apple Design principles guide the planned UX: immediate feedback, direct manipulation preserving grab offset, distinct panel borders for layout editing, system typography, accessible control sizes, and reduced motion. The VR world must remain stable rather than animate with UI decoration. No complete product UI is implemented in this checkpoint.
+Apple Design principles guide the planned UX: immediate feedback, direct manipulation preserving grab offset, distinct panel borders for layout editing, system typography, accessible control sizes, and reduced motion. The VR world must remain stable rather than animate with UI decoration. A basic Android settings/status interface is implemented; visual hand feedback and a complete consumer setup flow remain pending.

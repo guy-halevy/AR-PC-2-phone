@@ -1,46 +1,25 @@
 # PhoneXR Spatial Desktop
 
-**Development checkpoint — not an installable XR product.**
+Android phone headset + Windows spatial desktop. Development implementations now include ARCore head tracking, local MediaPipe/OpenCV hand pose estimation, encrypted hand transport, a patched Desktop+ panel adapter, Windows touch, and pinch-based panel manipulation.
 
-The goal is an Android phone headset and Windows spatial desktop with world-fixed panels and direct hand touch. This repository contains a source-level feasibility audit and supplies tested coordinate math and a diagnostic pose transport. It does **not** include a working PhoneXR APK, Windows executable, Desktop+ patch, camera tracking, video stream, or input injection. Desktop+ now compiles on Windows and the protocol suite passes Windows CI. PhoneVR and the matching ALVR streamer also build successfully, with baseline downloads linked below. The 6-DoF SteamVR vertical slice has not passed.
+The Android APK and Windows companion compile in CI. Physical stereo streaming, alignment, hand accuracy, latency and Windows input acceptance are still unverified. This is a development build, not a finished consumer release. The user's revised milestone order puts physical stereo acceptance after AR and hand implementation.
 
-[Baseline downloads, verified build results, and next gates](docs/STATUS.md)
+[Current evidence and downloads](docs/STATUS.md) · [Development setup](docs/DEVELOPMENT_SETUP.md) · [Dependency research](docs/TRACKING_DEPENDENCIES.md) · [Review record](docs/REVIEW.md)
 
-## What runs now
+## Implemented
 
-- Dependency-free C++17 rigid transforms, calibrated anchor/HMD composition, camera-axis conversion, and panel UV geometry.
-- Python 3.10+ authenticated 100-byte diagnostic pose packets, sequence/session checks, a receipt watchdog, and synthetic UDP replay.
-- Automated math, protocol, and loopback tests. Run `python tools/run_checks.py` with a C++17 compiler available.
-- An Android emulator test for APK installation, launcher visibility and native ALVR startup through viewer setup. See [test coverage](docs/ANDROID_STARTUP_TEST.md).
+- ARCore owns the camera and publishes capture-time head poses to both ALVR head and stereo-view paths. Recenter anchors the standing-space origin; settings expose eye height, camera-to-eye offset and hand scale.
+- MediaPipe runs on-device with one in-flight image. OpenCV estimates camera-relative hand position, rejects invalid geometry and transforms landmarks into the same standing space.
+- AES-GCM hand packets authenticate the session, sequence and random nonce. Pairing material is encrypted with Android KeyStore. Raw camera images are not sent by this pipeline.
+- Desktop+ exports validated panel geometry and accepts revision-checked manipulation commands. The Windows bridge implements contact debounce, hysteresis, loss release, single-contact touch and border/two-hand pinch manipulation. Input starts disabled.
+- Portable C++ math and protocol checks, Windows interaction regressions, and Android instrumentation tests cover bounded software behavior. See the evidence record for test limitations.
 
-Read [M0 feasibility](docs/M0_FEASIBILITY.md), [architecture](ARCHITECTURE.md), [build instructions](BUILDING.md), [test evidence](TESTING.md), and [roadmap](ROADMAP.md).
+## Supported development target
 
-## First supported target
+An ARCore-supported Android phone (arm64, Android 8/API26 or newer), a headset with an unobstructed rear camera, and a Windows gaming PC compatible with the pinned ALVR 20.8.0/SteamVR stack. iPhone needs a separate client. Device compatibility has not been established for the user's phone.
 
-An ARCore-supported Android phone, a headset with an unobstructed rear camera, and a Windows gaming PC compatible with the pinned ALVR/SteamVR stack. Xiaomi model and ROM, GPU model, and headset geometry are still unknown. iPhone requires a separate client. Universal phone/PC compatibility has not been established.
+A phone download alone cannot provide a Windows spatial desktop: the PC companion, streaming software, pairing and calibration are also required. Development packages contain binaries and corresponding source; GitHub artifact downloads may require sign-in.
 
-## Diagnostic replay
+## Local checks
 
-From this directory, create fresh local pairing material:
-
-```sh
-python shared/protocol/pose_packet.py create-pairing --key-file pairing.key --session-file pairing.session
-```
-
-In one terminal:
-
-```sh
-python tools/packet-viewer/receive.py --key-file pairing.key --session-file pairing.session
-```
-
-In another:
-
-```sh
-python tools/replay-tool/replay.py --key-file pairing.key --session-file pairing.session
-```
-
-The receiver prints synthetic camera motion and a final paused state. Nothing changes in SteamVR or Windows. Use a fresh pair for a new receiver session; do not package these files. The default address is loopback. There is no automatic phone discovery, secure pairing UI, or network clock synchronization yet.
-
-## Delivery status
-
-This archive is source and development tooling. A phone download alone cannot fulfill this design: the Windows companion and streaming stack are also required. The end-user installation path will be documented only after real packages and hardware acceptance tests exist.
+Run `python tools/run_checks.py` for shared math and diagnostic transport. Install `windows-bridge/requirements.txt`, then run `python -m unittest discover -s tests/interaction -v` for interaction regressions. These checks do not move a physical pointer or certify tracking accuracy.

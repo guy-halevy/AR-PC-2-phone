@@ -18,6 +18,7 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.ScrollView;
 import androidx.core.app.ActivityCompat;
 import com.google.ar.core.Anchor;
 import com.google.ar.core.ArCoreApk;
@@ -69,6 +70,7 @@ public final class XrController implements HandTracker.Listener {
     private void status(String text){if(text.equals(lastStatus))return;lastStatus=text;activity.runOnUiThread(()->label.setText("PhoneXR · "+text));}
     public void onResume(){
         paused=false;
+        NativeBridge.publishPose(false,false,0,null);
         if(!enabled){NativeBridge.publishPose(false,false,0,null);status("rotation only · AR disabled");return;}
         if(!NativeBridge.viewerConfigured()){status("complete Cardboard viewer setup first");return;}
         if(ActivityCompat.checkSelfPermission(activity,Manifest.permission.CAMERA)!=PackageManager.PERMISSION_GRANTED){
@@ -164,7 +166,8 @@ public final class XrController implements HandTracker.Listener {
         EditText offsets=field(box,"Camera → eye offset in meters: x,y,z",offsetX+","+offsetY+","+offsetZ);
         EditText scale=field(box,"Hand depth calibration scale (0.5–1.5)",Float.toString(prefs.getFloat("handScale",1)));
         TextView note=new TextView(activity);note.setText("Frames stay on this phone. Hand depth is estimated; calibrate before enabling PC input. Recenter while facing your intended forward direction. AR uses Google Play Services for AR.");box.addView(note);
-        AlertDialog dialog=new AlertDialog.Builder(activity).setTitle("PhoneXR setup").setView(box).setNegativeButton("Cancel",null).setNeutralButton("Recenter",(d,w)->{recenter=true;hands.invalidate();HandSender s=sender;if(s!=null)s.pause();}).setPositiveButton("Apply",null).create();
+        ScrollView scroll=new ScrollView(activity);scroll.addView(box);
+        AlertDialog dialog=new AlertDialog.Builder(activity).setTitle("PhoneXR setup").setView(scroll).setNegativeButton("Cancel",null).setNeutralButton("Recenter",(d,w)->{recenter=true;hands.invalidate();HandSender s=sender;if(s!=null)s.pause();}).setPositiveButton("Apply",null).create();
         dialog.setOnShowListener(d->dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{
             try{
                 float h=Float.parseFloat(heightField.getText().toString());String[] xyz=offsets.getText().toString().split(",");
