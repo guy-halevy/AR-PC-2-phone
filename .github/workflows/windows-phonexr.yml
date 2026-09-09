@@ -1,0 +1,85 @@
+name: Windows PhoneXR adapter and bridge
+on:
+  push:
+    paths:
+      - '.github/workflows/windows-phonexr.yml'
+      - 'desktopplus-integration/**'
+      - 'windows-bridge/**'
+      - 'tests/interaction/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  phonexr:
+    runs-on: windows-2022
+    timeout-minutes: 35
+    steps:
+      - name: Checkout PhoneXR
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          path: phonexr
+          persist-credentials: false
+      - name: Checkout pinned DesktopPlus source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: elvissteinjr/DesktopPlus
+          ref: 031d74d69f08411a9a9b1030d3d428ac02b93549
+          path: desktopplus
+          persist-credentials: false
+      - name: Set up MSBuild
+        uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2
+      - name: Apply checked PhoneXR integration
+        run: python phonexr/desktopplus-integration/prepare_desktopplus.py desktopplus
+      - name: Restore native dependencies
+        run: nuget restore desktopplus/src/DesktopPlus.sln
+      - name: Compile DesktopPlus with PhoneXR adapter
+        run: msbuild /m /p:Configuration=Release /p:Platform=x64 desktopplus/src/DesktopPlus.sln
+      - name: Install bridge dependencies and packager
+        run: python -m pip install -r phonexr/windows-bridge/requirements.txt pyinstaller==6.16.0
+      - name: Run protocol and interaction regressions without physical input
+        run: python -m unittest discover -s phonexr/tests/interaction -v
+      - name: Package console bridge
+        run: python -m PyInstaller --noconfirm --clean --onefile --console --name PhoneXRBridge --paths phonexr/windows-bridge --distpath bridge-dist phonexr/windows-bridge/bridge.py
+      - name: Smoke test packaged entry point without initializing input
+        run: ./bridge-dist/PhoneXRBridge.exe --help
+      - name: Include corresponding source, dependency notices, and status
+        shell: python
+        run: |
+          from pathlib import Path
+          import importlib.metadata
+          import shutil
+          import subprocess
+          import zipfile
+          output = Path('phonexr-artifact'); output.mkdir()
+          root = Path('desktopplus')
+          tracked = subprocess.check_output(['git', '-C', str(root), 'ls-files', '-z']).decode().split('\0')
+          names = set(filter(None, tracked)) | {'src/DesktopPlus/PhoneXRAdapter.cpp', 'src/DesktopPlus/PhoneXRAdapter.h'}
+          with zipfile.ZipFile(output/'DesktopPlus-PhoneXR-source.zip', 'w', zipfile.ZIP_DEFLATED) as archive:
+              for name in sorted(names):
+                  path = root/name
+                  if path.is_file(): archive.write(path, 'DesktopPlus-source/'+name)
+          subprocess.run(['git', '-C', 'phonexr', 'archive', '--format=zip', '--prefix=PhoneXR-source/', '-o', str((output/'PhoneXR-source.zip').resolve()), 'HEAD'], check=True)
+          shutil.copyfile(root/'LICENSE', output/'LICENSE-DesktopPlus.txt')
+          shutil.copyfile('phonexr/windows-bridge/README.md', output/'BRIDGE-README.md')
+          (output/'python-dependencies.txt').write_bytes(subprocess.check_output(['python', '-m', 'pip', 'freeze']))
+          for name in ('cryptography', 'cffi', 'pycparser', 'pyinstaller'):
+              dist = importlib.metadata.distribution(name)
+              for file in dist.files or []:
+                  if '.dist-info/' in str(file) and any(word in str(file).lower() for word in ('license', 'copying', 'notice')):
+                      target = output/'dependency-notices'/name/str(file)
+                      target.parent.mkdir(parents=True, exist_ok=True)
+                      shutil.copyfile(dist.locate_file(file), target)
+          (output/'BUILD-STATUS.txt').write_text('PhoneXR development build: patched DesktopPlus v3.6 and authenticated Windows bridge.\nDesktopPlus baseline: 031d74d69f08411a9a9b1030d3d428ac02b93549.\nCI validates compilation, packaging and portable regressions only. SteamVR, captured-window mapping and physical input need hardware acceptance.\nInput starts disabled; see BRIDGE-README.md.\n')
+      - name: Upload development binaries and corresponding source
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: PhoneXR-Windows-development
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            desktopplus/src/x64/Release/**
+            !desktopplus/src/x64/Release/**/*.h
+            !desktopplus/src/x64/Release/**/*.lib
+            !desktopplus/src/x64/Release/**/*.exp
+            bridge-dist/PhoneXRBridge.exe
+            phonexr-artifact/**
