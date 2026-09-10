@@ -11,20 +11,24 @@ Evidence updated 2026-09-09. The user's revised order implements AR and hands be
 | Encrypted hand protocol | v2 AES-GCM, random nonces, persistent sequence reservations, session/replay/schema checks |
 | Desktop+ adapter / Windows input | Native panel snapshot/mutation integration, touch release state machine and pinch manipulation; Windows binaries build |
 | Interaction regressions | 23 tests pass locally and on Windows CI, including authenticated reconnection after source-port changes |
-| Android instrumentation | Strict run 34363342655 caught OpenCV naming and MediaPipe emulator-ABI defects; fixes are under test in an API30 x86 component fixture |
+| Android instrumentation | PASS: four production-component tests on API30 x86, with independent JUnit verification, in run 34365142111. No full headset runtime or physical camera test |
 | Physical stereo, AR and hand accuracy | NOT RUN |
 | Rendered hand skeleton / visual hover cursor | Not completed |
 | Consumer installer / stable release signing | Not completed; current APK uses development debug signing |
 
 ## Current development validation
 
-Matching protocol-v2 build candidates:
+Validated protocol-v2 development builds (component tests and packaging, not physical acceptance):
 
-- [Android APK build](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34365142203)
-- [Android component test evidence](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34365142111)
+- [Android APK build — passed](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34365142203): [download PhoneXR-Android-development](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34365142203/artifacts/10109827444), 73,605,476-byte ZIP including APK and corresponding source. APK signature, six required arm64 native libraries and model checksum passed.
+- [Android component tests — passed](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34365142111): real bundled model load/blank frame, known-geometry PnP/rejection, AES-GCM/KeyStore/persistent sequences, and frame-clock checks. [Download reports](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34365142111/artifacts/10109682058).
 - [Windows Desktop+ and bridge build — passed](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34363983157): [download PhoneXR-Windows-development](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34363983157/artifacts/10109167247), 18,285,322 bytes. Patched native build, 23 tests and packaged --help check passed.
 
-Do not use an unfinished or failed run as a validated download. Check the run conclusion and artifact. The final results will be recorded after completion. Protocol v1 and v2 hand packages are incompatible.
+The Android package and four-test component fixture use commit `ef70d745c297443ba8104e0c94dbde689bc90956`. The Windows package uses `6081ca775b8f592ab4fe7920505400f25194a057`; both implement protocol v2. These artifacts expire on 2026-09-23 and may require GitHub sign-in. Protocol v1 and v2 hand packages are incompatible.
+
+PhoneXR APK: `PhoneVR-v2.0.0-beta-noGvr-debug.apk`, 45,758,422 bytes, application ID `org.phonexr.client`, debug signed. SHA-256: `945a109de9db7f0b0193fa5931cbb456788a93242ec5a6f6382c503a6e81301d`. It contains ALVR native glue/client, Cardboard, OpenCV, MediaPipe and ARCore JNI libraries plus the verified hand model. The earlier PhoneXR builds before the OpenCV loader correction are superseded.
+
+The Android fixture executes production Java components on Android 11 x86. It does not execute the arm64 headset runtime or demonstrate detection of a real hand. The Windows regressions model injection contracts and include real loopback network cases; they do not establish physical desktop input behavior.
 
 [Development setup](DEVELOPMENT_SETUP.md) explains the PC companion, Android installation, pairing, calibration and outstanding physical checks. [Review record](REVIEW.md) distinguishes observed corrections from security claims. [Dependency research](TRACKING_DEPENDENCIES.md) explains the free/open-source hand components and ARCore licensing limit.
 

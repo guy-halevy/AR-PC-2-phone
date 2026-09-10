@@ -9,10 +9,14 @@ Verified locally on Linux with g++ 13.3.0 and Python. Reproduce using `python to
 | Python tests | PASS, 15 tests | Protocol validation, HMAC tampering, session/sequence/timestamp rules, expiry, and replay |
 | Loopback network cases | PASS | Real local UDP receipt, synthetic motion and pause, watchdog amid invalid traffic |
 | Windows protocol suite | PASS, 15 tests on windows-2022 | [CI run](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34193762726); includes the injected oversized-error regression |
+| PhoneXR arm64 APK | PASS | [Run 34365142203](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34365142203): corrected OpenCV loader; APK signature, all six required native libraries and exact model hash verified; no physical runtime test |
 | PhoneVR Android APK | PASS | [CI run](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34195739292): Cardboard, ALVR native client, APK assembly, native payload and signature verification |
 | ALVR Windows native build | PASS | [CI run](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34195828548): streamer/dashboard compilation and source packaging |
 | Desktop+ v3.6 Release x64 | PASS on windows-2022 | [CI build and source artifact](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34193762666); no desktop runtime test |
 | Android emulator startup | PASS on API34 x86_64 | [Run 34230007065](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34230007065): installs, shows launcher, opens native ALVR activity and reaches Cardboard viewer setup without a detected crash; explicit foreground assertion and app-process crash checks passed |
+| Android hand components | PASS, four tests on API30 x86 | [Run 34365142111](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34365142111): real MediaPipe model load/blank frame, OpenCV known-geometry PnP, AES-GCM/KeyStore/sequence persistence and frame timing; all four JUnit results required; component fixture uses production Java, not full headset runtime |
+| Windows interaction and hand protocol | PASS, 23 tests | [Run 34363983157](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34363983157): contact loss/release, geometry/mutation, authenticated packets and port recreation; no physical injection |
+| Native AR snapshot | PASS | Actual production header with narrow JNI/Cardboard doubles checks timestamp/freshness, frozen pose, invalid-pose rejection and recovery |
 | External second opinion | UNAVAILABLE | Both `codex` and `agy` commands absent; no external review completed |
 
 Native build progress after the local audit is tracked in [STATUS.md](docs/STATUS.md). SteamVR, mounted-phone camera, and actual device tests remain unrun.
