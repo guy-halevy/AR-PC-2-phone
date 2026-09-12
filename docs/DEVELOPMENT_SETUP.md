@@ -2,12 +2,12 @@
 
 Use matching PhoneXR Android and Windows builds with protocol v2; the earlier v1 packages cannot exchange hand packets. This procedure has not yet been completed on physical hardware.
 
-1. On the PC, install SteamVR and extract the matching ALVR 20.8.0 streamer package linked in STATUS.md. Start its dashboard and follow its driver setup. Keep the desktop session unlocked.
-2. Extract the PhoneXR Windows package. Run its patched Desktop+ executable with SteamVR and create a flat desktop/window panel. The bridge reads the current panel snapshot automatically.
-3. Run `PhoneXRBridge.exe --host YOUR_PC_LAN_IPV4` using the PC's private-network IPv4 address. The console prints a private pairing URI. Input stays disabled until you press E; D releases/disables it and Q releases/quits.
-4. Download and extract the PhoneXR Android artifact ZIP. Its APK is under `third_party/PhoneVR/code/mobile/android/PhoneVR/app/build/outputs/apk/noGvr/debug/`; the filename retains the upstream PhoneVR version name, but its application ID is `org.phonexr.client`. Install that APK. The development APK is debug signed; separately built packages may have different signing keys. Choose the ALVR client path and complete Cardboard viewer setup. Connect the phone to the PC's network and accept it in the ALVR dashboard.
-5. In the PhoneXR setup controls, enter the bridge pairing URI. Enable AR and hands, grant camera permission, and complete the ARCore installation prompt if shown. Set eye height and the mounted camera-to-eye offset; recenter while facing the intended standing-space forward direction.
-6. Verify stereo and head movement first, then enable Windows input with E and assess contact against a test panel. Loss of hands/tracking should release contact. Border pinches translate unlocked panels; two pinches scale and rotate in the panel plane.
+1. Install SteamVR through Steam on the Windows PC. Download the PhoneXR Windows artifact ZIP and run `installer-dist/PhoneXR-Companion-Setup.exe`. The per-user installer bundles patched Desktop+, the matching ALVR streamer, the hand bridge, the companion UI, and corresponding source/notices.
+2. Open **PhoneXR Companion** from the Start menu. Use **ALVR** to open the streamer dashboard and complete its SteamVR driver setup, then use **Desktop+** to create your panels. These programs run in your normal desktop session.
+3. Select the PC's private IPv4 address and click **Start connection**. Copy the pairing code for the phone. Hand input starts disabled; the companion has explicit **Enable hand input**, **Disable and release**, and **Stop** controls.
+4. Download and extract the Android artifact ZIP and install the top-level `PhoneXR.apk`. It is a development APK with application ID `org.phonexr.client`. Separately built debug APKs may have different signing keys. Choose ALVR, complete Cardboard viewer setup, and accept the phone in the PC's ALVR dashboard.
+5. In **PhoneXR setup**, enter the pairing code. Enable AR and hand tracking, grant camera permission, and complete the Google Play Services for AR prompt if shown. Set eye height and mounted camera-to-eye offset, then recenter while facing the intended forward direction. The stereo hand-skeleton display is enabled by default and can be toggled here.
+6. Verify the image and head movement, then enable input in the companion and assess a test panel. Index contact provides touch/drag; border pinches translate unlocked panels, and two pinches scale/rotate them. Lost or stale hands release touch and hide their skeleton. Keep a physical mouse/keyboard available for initial validation.
 
 Pair again after restarting the Windows bridge. If app data is cleared, restart the bridge to create a fresh session. Do not share the pairing URI or place it in logs/screenshots. The sender processes images locally and sends derived coordinates only.
 
@@ -15,4 +15,4 @@ Pair again after restarting the Windows bridge. If app data is cleared, restart 
 
 Record phone/Android version, PC GPU/driver, headset, refresh rate and network. Check left/right eye ordering, optics, stable world position under translation and rotation, pause/resume and recenter. Measure fingertip depth/contact error and latency, including occlusion and tracking loss. Exercise panel crop, multiple-monitor origins, DPI changes, window closure, failed touch updates and app shutdown. Run a sustained thermal/session test.
 
-A CI green check cannot establish any of those physical results. The present release does not include a hand-skeleton overlay, automatic metric calibration, or a one-click PC installer.
+A CI green check cannot establish any of those physical results. The software includes a stereo hand-skeleton overlay and per-user PC installer. Automatic metric calibration and physical hardware validation remain open. SteamVR setup and phone pairing still require user interaction.

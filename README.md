@@ -1,6 +1,6 @@
 # PhoneXR Spatial Desktop
 
-Android phone headset + Windows spatial desktop. Development implementations now include ARCore head tracking, local MediaPipe/OpenCV hand pose estimation, encrypted hand transport, a patched Desktop+ panel adapter, Windows touch, and pinch-based panel manipulation.
+Android phone headset + Windows spatial desktop. Development implementations now include ARCore head tracking, local MediaPipe/OpenCV hand pose estimation, encrypted hand transport, a patched Desktop+ panel adapter, Windows touch, pinch-based panel manipulation, a stereo hand-skeleton display and a per-user Windows companion installer.
 
 The Android APK and Windows companion compile in CI. Physical stereo streaming, alignment, hand accuracy, latency and Windows input acceptance are still unverified. This is a development build, not a finished consumer release. The user's revised milestone order puts physical stereo acceptance after AR and hand implementation.
 

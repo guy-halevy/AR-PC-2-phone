@@ -1,6 +1,6 @@
 # Current implementation status
 
-Evidence updated 2026-09-09. The user's revised order implements AR and hands before real phone-to-PC stereo testing. Development source and binaries now exist; physical acceptance and a finished consumer installation flow remain pending.
+Evidence updated 2026-09-12. The user's revised order implements AR and hands before real phone-to-PC stereo testing. Development source and binaries now exist; physical acceptance and a finished consumer installation flow remain pending.
 
 | Component | Implementation and observed evidence |
 | --- | --- |
@@ -10,13 +10,23 @@ Evidence updated 2026-09-09. The user's revised order implements AR and hands be
 | MediaPipe/OpenCV hands | Local two-hand model inference and PnP standing-space conversion compiled into the APK |
 | Encrypted hand protocol | v2 AES-GCM, random nonces, persistent sequence reservations, session/replay/schema checks |
 | Desktop+ adapter / Windows input | Native panel snapshot/mutation integration, touch release state machine and pinch manipulation; Windows binaries build |
-| Interaction regressions | 23 tests pass locally and on Windows CI, including authenticated reconnection after source-port changes |
-| Android instrumentation | PASS: four production-component tests on API30 x86, with independent JUnit verification, in run 34365142111. No full headset runtime or physical camera test |
+| Interaction/setup regressions | 28 tests pass locally and in Windows CI, including pipe-closure release and private-address setup |
+| Android instrumentation | PASS: five production-component/GLES3 tests on API30 x86, independently verified in run 34704809509; no physical camera/stereo test |
 | Physical stereo, AR and hand accuracy | NOT RUN |
-| Rendered hand skeleton / visual hover cursor | Not completed |
-| Consumer installer / stable release signing | Not completed; current APK uses development debug signing |
+| Stereo hand skeleton | Implemented; actual GLES3 renderer pixel/disparity/state/stale tests pass on Android emulator |
+| PC installer | Per-user install/GUI/uninstall checks passed; ALVR-inclusive bundle under final build validation |
+| Stable release signing | Not configured; current APK uses development debug signing |
 
-## Current development validation
+## Latest completion checks
+
+- [Five Android tests, including actual stereo hand renderer — passed](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34704809509).
+- [Installer installation, GUI startup and uninstall — passed](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34704809482).
+- [Phone APK with stereo hands and native lifecycle repairs — passed](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34704809443). [Download ZIP containing top-level PhoneXR.apk](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34704809443/artifacts/10301293897). APK: 45,779,502 bytes; SHA-256 `404158de6ddc4d452e71d01713ba4a53876d7d8e3d45ed9a73ce6e6aa9edb3f4`. Signature, required native libraries and model hash passed. The prepared native sanitizer harness passed 100 live-worker destroys, repeated stops, EGL guards, GPU teardown and JNI reference release.
+- [Windows installer with bundled matching ALVR](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34704914487).
+
+Latest package results will be recorded below after completion. The earlier downloads below remain historical evidence and lack the newly implemented hand display/installer.
+
+## Previous development validation
 
 Validated protocol-v2 development builds (component tests and packaging, not physical acceptance):
 

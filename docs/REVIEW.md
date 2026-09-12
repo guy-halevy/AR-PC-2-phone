@@ -62,3 +62,13 @@ Run 34363342655 executed four selected tests and correctly failed: OpenCV attemp
 Direct AAR archive inspection established those filenames/ABIs. Previous compile-only PhoneXR APKs must not be used as evidence of working hand inference because the OpenCV loader defect also affected the phone path.
 
 The corrected component fixture subsequently passed all four tests in [run 34365142111](https://github.com/guy-halevy/AR-PC-2-phone/actions/runs/34365142111). The independent XML gate listed each expected method and accepted none as skipped. This verifies the model/geometry/encryption/clock components on Android 11 x86, not physical hand detection accuracy or the arm64 headset runtime.
+
+## Stereo rendering and companion completion, 2026-09-12
+
+The renderer now projects up to two hand skeletons into the two matching ALVR eye views before Cardboard distortion, with a 150 ms freshness gate, explicit clearing on tracking loss and a setup toggle. A GPU fixture executes the actual renderer against EGL/GLES3 textures and checks pixels, stereo disparity, stale suppression and restored GL state. Its result is tracked in STATUS.md.
+
+Independent source review confirmed the upstream `alvr_get_frame` caller allocated one view structure while the pinned Rust API writes two. The derivative now allocates two. The adjacent write through a Cardboard parameter pointer after its destruction was removed. These are concrete memory-lifetime corrections; physical exploitation was not attempted.
+
+Native lifecycle repairs stop/join the input worker before teardown, serialize lifecycle/configuration access, release the JNI Activity global reference, and run GPU teardown on the GL thread before surface pause. A harness extracts the prepared teardown functions and checks repeated live-worker destruction and EGL guards under sanitizers in CI. Local sanitizer execution is limited by this sandbox's process-inspection restrictions; that limitation is not counted as a test pass.
+
+The Windows companion exposes local pairing, input controls and launch buttons. The per-user installer makes no automatic firewall changes and does not initialize input during install tests. Its first CI build passed install, GUI self-test and uninstall; the extended ALVR bundle is tracked separately in STATUS.md. SteamVR remains a separately installed runtime.
