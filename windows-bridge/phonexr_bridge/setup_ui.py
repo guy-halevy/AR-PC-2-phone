@@ -115,9 +115,10 @@ def main(smoke_test=False):
         status.set('Connecting… Input is disabled.')
         threading.Thread(target=read_output, args=(process,), daemon=True).start()
 
-    def desktop():
+    def desktop(relative="DesktopPlus/DesktopPlus.exe"):
+
         base = Path(sys.executable).parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parents[1]
-        exe = base/'DesktopPlus'/'DesktopPlus.exe'
+        exe = base/relative
         if not exe.is_file():
             messagebox.showinfo('Desktop+ unavailable', 'Install the full PhoneXR companion package to include Desktop+.')
             return
@@ -134,7 +135,8 @@ def main(smoke_test=False):
             copied = pairing
             status.set('Pairing code copied. Input remains under your control below.')
 
-    ttk.Button(row, text='Open Desktop+', command=desktop).pack(side='left')
+    ttk.Button(row, text='Desktop+', command=desktop).pack(side='left')
+    ttk.Button(row, text='ALVR', command=lambda: desktop('ALVR/ALVR Dashboard.exe')).pack(side='left', padx=6)
     start_button = ttk.Button(row, text='Start connection', command=start)
     start_button.pack(side='left', padx=8)
     ttk.Button(row, text='Stop', command=stop).pack(side='left')

@@ -6,13 +6,17 @@ on:
       - 'desktopplus-integration/**'
       - 'windows-bridge/**'
       - 'tests/interaction/**'
+      - 'scripts/prepare_windows_streamer.py'
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   phonexr:
     runs-on: windows-2022
-    timeout-minutes: 35
+    timeout-minutes: 60
+    env:
+      CARGO_BUILD_JOBS: '3'
+      CARGO_TERM_COLOR: always
     steps:
       - name: Checkout PhoneXR
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -34,6 +38,25 @@ jobs:
         run: nuget restore desktopplus/src/DesktopPlus.sln
       - name: Compile DesktopPlus with PhoneXR adapter
         run: msbuild /m /p:Configuration=Release /p:Platform=x64 desktopplus/src/DesktopPlus.sln
+      - name: Checkout matching ALVR streamer
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          repository: alvr-org/ALVR
+          ref: 1d121fa7e0761ef26473c6b3f3fbd9b6051ce033
+          submodules: recursive
+          path: alvr
+          persist-credentials: false
+      - name: Build bundled matching ALVR
+        shell: pwsh
+        working-directory: alvr
+        run: |
+          rustup toolchain install 1.85.1 --profile minimal
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $env:LIBCLANG_PATH = 'C:\Program Files\LLVM\bin'
+          python ../phonexr/scripts/prepare_windows_streamer.py .
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cargo +1.85.1 run --locked -p alvr_xtask -- build-streamer --release
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Install bridge dependencies and packager
         run: python -m pip install -r phonexr/windows-bridge/requirements.txt pyinstaller==6.16.0
       - name: Run protocol and interaction regressions without physical input
@@ -62,6 +85,9 @@ jobs:
                   if path.is_file(): archive.write(path, 'DesktopPlus-source/'+name)
           subprocess.run(['git', '-C', 'phonexr', 'archive', '--format=zip', '--prefix=PhoneXR-source/', '-o', str((output/'PhoneXR-source.zip').resolve()), 'HEAD'], check=True)
           shutil.copyfile(root/'LICENSE', output/'LICENSE-DesktopPlus.txt')
+          shutil.copyfile('alvr/LICENSE', output/'LICENSE-ALVR.txt')
+          subprocess.run(['git', '-C', 'alvr', 'archive', '--format=zip', '--prefix=ALVR-source/', '-o', str((output/'ALVR-source.zip').resolve()), 'HEAD'], check=True)
+          (output/'ALVR-build.patch').write_bytes(subprocess.check_output(['git','-C','alvr','diff','--binary']))
           shutil.copyfile('phonexr/windows-bridge/README.md', output/'BRIDGE-README.md')
           (output/'python-dependencies.txt').write_bytes(subprocess.check_output(['python', '-m', 'pip', 'freeze']))
           for name in ('cryptography', 'cffi', 'pycparser', 'pyinstaller'):
@@ -82,6 +108,9 @@ jobs:
               shutil.copyfile(Path('bridge-dist')/name, stage/name)
           shutil.copytree('desktopplus/src/x64/Release', stage/'DesktopPlus', ignore=shutil.ignore_patterns('*.h','*.lib','*.exp','*.pdb','*.obj'))
           shutil.copytree('phonexr-artifact', stage/'Source-and-notices')
+          shutil.copytree('alvr/build/alvr_streamer_windows', stage/'ALVR')
+          for name in ('ALVR Dashboard.exe', 'bin/win64/driver_alvr_server.dll'):
+              if not (stage/'ALVR'/name).is_file(): raise RuntimeError('Missing ALVR payload: '+name)
           for name in ('DesktopPlus.exe', 'DesktopPlusUI.exe', 'openvr_api.dll', 'manifest.vrmanifest', 'action_manifest.json'):
               if not (stage/'DesktopPlus'/name).is_file():
                   raise RuntimeError('Missing Desktop+ runtime payload: '+name)
@@ -98,7 +127,7 @@ jobs:
           $destination = "$env:RUNNER_TEMP\PhoneXR-install-test"
           $setup = Start-Process "$pwd\installer-dist\PhoneXR-Companion-Setup.exe" -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART',"/DIR=`"$destination`"") -Wait -PassThru
           if ($setup.ExitCode -ne 0) { throw 'Installation failed' }
-          foreach ($name in @('PhoneXRBridge.exe','PhoneXRCompanion.exe','DesktopPlus\DesktopPlus.exe','Source-and-notices\PhoneXR-source.zip')) {
+          foreach ($name in @('PhoneXRBridge.exe','PhoneXRCompanion.exe','DesktopPlus\DesktopPlus.exe','Source-and-notices\PhoneXR-source.zip','ALVR\ALVR Dashboard.exe','ALVR\bin\win64\driver_alvr_server.dll')) {
             if (!(Test-Path "$destination\$name")) { throw "Missing installed payload: $name" }
           }
           & "$destination\PhoneXRBridge.exe" --help
