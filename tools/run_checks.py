@@ -24,6 +24,12 @@ commands += [
      str(ROOT / "tests/native/test_xr_pose.cpp"), "-o", str(native_executable)],
     [str(native_executable)],
 ]
+projection_executable = BUILD / ("test_hand_projection.exe" if os.name == "nt" else "test_hand_projection")
+commands += [
+    [compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror", "-pedantic",
+     str(ROOT / "tests/native/test_hand_projection.cpp"), "-o", str(projection_executable)],
+    [str(projection_executable)],
+]
 results = []
 for command in commands:
     result = subprocess.run(command, cwd=ROOT, text=True, stdout=subprocess.PIPE,

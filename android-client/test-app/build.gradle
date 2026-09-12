@@ -2,6 +2,8 @@ plugins { id 'com.android.application' version '8.3.1' }
 android {
     namespace 'org.phonexr.componenttests'
     compileSdk 34
+    ndkVersion '25.2.9519653'
+    externalNativeBuild { cmake { path 'src/main/cpp/CMakeLists.txt'; version '3.22.1' } }
     defaultConfig {
         applicationId 'org.phonexr.componenttests'
         minSdk 26

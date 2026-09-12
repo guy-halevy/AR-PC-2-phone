@@ -5,6 +5,7 @@ on:
       - '.github/workflows/android-phonexr.yml'
       - 'android-client/**'
       - 'scripts/prepare_phonexr.py'
+      - 'scripts/prepare_native_lifecycle.py'
       - 'scripts/prepare_phonevr_baseline.py'
       - 'scripts/verify_baseline_apk.py'
   workflow_dispatch:
@@ -58,6 +59,8 @@ jobs:
         run: python scripts/prepare_phonevr_baseline.py third_party/PhoneVR third_party/Cardboard
       - name: Integrate ARCore, hands and encrypted transport
         run: python scripts/prepare_phonexr.py third_party/PhoneVR
+      - name: Check prepared native teardown with sanitizers
+        run: python scripts/test_native_lifecycle.py --project third_party/PhoneVR/code/mobile/android/PhoneVR
       - name: Build pinned Cardboard SDK
         working-directory: third_party/Cardboard
         run: bash gradlew sdk:assembleRelease --no-daemon --console=plain
@@ -92,15 +95,25 @@ jobs:
           cp scripts/prepare_phonevr_baseline.py baseline-artifact/
           cp docs/TRACKING_DEPENDENCIES.md baseline-artifact/
           cp scripts/prepare_phonexr.py baseline-artifact/
+          cp scripts/prepare_native_lifecycle.py baseline-artifact/
           cp third_party/PhoneVR/LICENSE baseline-artifact/LICENSE-PhoneVR.txt
           cp third_party/PhoneVR/code/mobile/android/PhoneVR/ALVR/LICENSE baseline-artifact/LICENSE-ALVR.txt
           cp third_party/Cardboard/LICENSE baseline-artifact/LICENSE-Cardboard.txt
-      - name: Upload baseline APK and source
+      - name: Stage phone download
+        shell: python
+        run: |
+          from pathlib import Path
+          import shutil
+          root = Path('phonexr-download'); root.mkdir()
+          apks = list(Path('third_party/PhoneVR/code/mobile/android/PhoneVR/app/build/outputs/apk/noGvr/debug').glob('*.apk'))
+          assert len(apks) == 1
+          shutil.copyfile(apks[0], root/'PhoneXR.apk')
+          shutil.copytree('baseline-artifact', root/'source-and-build-record')
+          shutil.copyfile('docs/DEVELOPMENT_SETUP.md', root/'START-HERE.md')
+      - name: Upload PhoneXR APK and corresponding source
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: PhoneXR-Android-development
           if-no-files-found: error
           retention-days: 14
-          path: |
-            third_party/PhoneVR/code/mobile/android/PhoneVR/app/build/outputs/apk/noGvr/debug/*.apk
-            baseline-artifact/**
+          path: phonexr-download/**

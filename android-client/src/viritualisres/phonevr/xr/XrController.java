@@ -43,7 +43,7 @@ public final class XrController implements HandTracker.Listener {
     private final HandTracker hands;
     private final TextView label;
     private volatile HandSender sender;
-    private volatile boolean recenter=true, enabled, handsEnabled, paused=true;
+    private volatile boolean recenter=true, enabled, handsEnabled, showHands, paused=true;
     private volatile float eyeHeight, offsetX, offsetY, offsetZ;
     private volatile String lastStatus="";
     private Session session;
@@ -55,7 +55,7 @@ public final class XrController implements HandTracker.Listener {
 
     public XrController(Activity activity,GLSurfaceView surface){
         this.activity=activity;prefs=activity.getSharedPreferences("xr-settings",0);
-        enabled=prefs.getBoolean("enabled",true);handsEnabled=prefs.getBoolean("hands",true);
+        enabled=prefs.getBoolean("enabled",true);handsEnabled=prefs.getBoolean("hands",true);showHands=prefs.getBoolean("showHands",true);
         eyeHeight=prefs.getFloat("height",1.6f);offsetX=prefs.getFloat("offsetX",0);
         offsetY=prefs.getFloat("offsetY",0);offsetZ=prefs.getFloat("offsetZ",.04f);
         hands=new HandTracker(activity,this);hands.setHandScale(prefs.getFloat("handScale",1));
@@ -93,7 +93,7 @@ public final class XrController implements HandTracker.Listener {
             }catch(Exception e){status("AR unavailable: "+e.getClass().getSimpleName());NativeBridge.publishPose(false,false,0,null);}
         }
     }
-    public void beforePause(){paused=true;hands.invalidate();HandSender s=sender;if(s!=null)s.pause();NativeBridge.publishPose(enabled,false,0,null);}
+    public void beforePause(){paused=true;hands.invalidate();NativeBridge.publishHands(0,null);HandSender s=sender;if(s!=null)s.pause();NativeBridge.publishPose(enabled,false,0,null);}
     // Called after GLSurfaceView.onPause, so no GL frame is waiting for the UI thread.
     public void afterPause(){synchronized(sessionLock){if(session!=null&&resumed){session.pause();resumed=false;}}}
     public void onDestroy(){beforePause();afterPause();hands.close();HandSender s=sender;if(s!=null)s.close();synchronized(sessionLock){if(anchor!=null){anchor.detach();anchor=null;}if(session!=null){session.close();session=null;}}}
@@ -126,7 +126,7 @@ public final class XrController implements HandTracker.Listener {
                 Pose cameraToHead=new Pose(new float[]{offsetX,offsetY,offsetZ},mountedRotation.getRotationQuaternion());
                 Pose worldHead=physical.compose(cameraToHead);
                 if(recenter||anchor==null){
-                    hands.invalidate();HandSender s=sender;if(s!=null)s.pause();
+                    hands.invalidate();NativeBridge.publishHands(0,null);HandSender s=sender;if(s!=null)s.pause();
                     if(anchor!=null)anchor.detach();
                     float[] f=worldHead.rotateVector(new float[]{0,0,-1});
                     float yaw=(float)Math.atan2(-f[0],-f[2]);
@@ -153,21 +153,30 @@ public final class XrController implements HandTracker.Listener {
             }catch(Exception e){lost("tracking error: "+e.getClass().getSimpleName());}
         }
     }
-    private void lost(String reason){NativeBridge.publishPose(true,false,0,null);hands.invalidate();HandSender s=sender;if(s!=null)s.pause();status(reason);}
-    public void onHands(List<HandObservation> result,long capture){HandSender s=sender;if(s!=null)s.send(paused||!handsEnabled?Collections.emptyList():result,capture);}
-    public void onError(String message){status(message);}
+    private void lost(String reason){NativeBridge.publishPose(true,false,0,null);hands.invalidate();NativeBridge.publishHands(0,null);HandSender s=sender;if(s!=null)s.pause();status(reason);}
+    public void onHands(List<HandObservation> result,long capture){
+        boolean active=!paused&&enabled&&handsEnabled;
+        if(active&&showHands&&!result.isEmpty()){
+            int count=Math.min(2,result.size());float[] points=new float[count*63];
+            for(int i=0;i<count;i++)System.arraycopy(result.get(i).standingLandmarks,0,points,i*63,63);
+            NativeBridge.publishHands(capture,points);
+        }else NativeBridge.publishHands(0,null);
+        HandSender s=sender;if(s!=null)s.send(active?result:Collections.emptyList(),capture);
+    }
+    public void onError(String message){NativeBridge.publishHands(0,null);status(message);}
     private EditText field(LinearLayout layout,String title,String value){TextView hint=new TextView(activity);hint.setText(title);layout.addView(hint);EditText edit=new EditText(activity);edit.setText(value);edit.setSingleLine(true);layout.addView(edit);return edit;}
     private void settings(){
         LinearLayout box=new LinearLayout(activity);box.setOrientation(LinearLayout.VERTICAL);box.setPadding(24,8,24,8);
         CheckBox ar=new CheckBox(activity);ar.setText("AR head tracking");ar.setChecked(enabled);box.addView(ar);
         CheckBox hand=new CheckBox(activity);hand.setText("Local hand tracking");hand.setChecked(handsEnabled);box.addView(hand);
+        CheckBox visible=new CheckBox(activity);visible.setText("Show hand skeleton in both eyes");visible.setChecked(showHands);box.addView(visible);
         EditText pair=field(box,"PC pairing URI (leave empty to keep current pairing)","");pair.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_PASSWORD);
         EditText heightField=field(box,"Standing eye height in meters",Float.toString(eyeHeight));
         EditText offsets=field(box,"Camera → eye offset in meters: x,y,z",offsetX+","+offsetY+","+offsetZ);
         EditText scale=field(box,"Hand depth calibration scale (0.5–1.5)",Float.toString(prefs.getFloat("handScale",1)));
         TextView note=new TextView(activity);note.setText("Frames stay on this phone. Hand depth is estimated; calibrate before enabling PC input. Recenter while facing your intended forward direction. AR uses Google Play Services for AR.");box.addView(note);
         ScrollView scroll=new ScrollView(activity);scroll.addView(box);
-        AlertDialog dialog=new AlertDialog.Builder(activity).setTitle("PhoneXR setup").setView(scroll).setNegativeButton("Cancel",null).setNeutralButton("Recenter",(d,w)->{recenter=true;hands.invalidate();HandSender s=sender;if(s!=null)s.pause();}).setPositiveButton("Apply",null).create();
+        AlertDialog dialog=new AlertDialog.Builder(activity).setTitle("PhoneXR setup").setView(scroll).setNegativeButton("Cancel",null).setNeutralButton("Recenter",(d,w)->{recenter=true;hands.invalidate();NativeBridge.publishHands(0,null);HandSender s=sender;if(s!=null)s.pause();}).setPositiveButton("Apply",null).create();
         dialog.setOnShowListener(d->dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{
             try{
                 float h=Float.parseFloat(heightField.getText().toString());String[] xyz=offsets.getText().toString().split(",");
@@ -176,8 +185,8 @@ public final class XrController implements HandTracker.Listener {
                 float hs=Float.parseFloat(scale.getText().toString());if(!Float.isFinite(hs)||hs<.5f||hs>1.5f)throw new IllegalArgumentException("Hand scale must be 0.5–1.5");
                 String uri=pair.getText().toString().trim();
                 if(!uri.isEmpty()){HandSender replacement=new HandSender(activity,uri);try{PairingStore.save(activity,uri);}catch(Exception e){replacement.close();throw e;}HandSender old=sender;sender=replacement;if(old!=null)old.close();}
-                beforePause();afterPause();enabled=ar.isChecked();handsEnabled=hand.isChecked();eyeHeight=h;offsetX=o[0];offsetY=o[1];offsetZ=o[2];hands.setHandScale(hs);recenter=true;
-                prefs.edit().putBoolean("enabled",enabled).putBoolean("hands",handsEnabled).putFloat("height",h).putFloat("offsetX",o[0]).putFloat("offsetY",o[1]).putFloat("offsetZ",o[2]).putFloat("handScale",hs).apply();
+                beforePause();afterPause();enabled=ar.isChecked();handsEnabled=hand.isChecked();showHands=visible.isChecked();eyeHeight=h;offsetX=o[0];offsetY=o[1];offsetZ=o[2];hands.setHandScale(hs);recenter=true;
+                prefs.edit().putBoolean("enabled",enabled).putBoolean("hands",handsEnabled).putBoolean("showHands",showHands).putFloat("height",h).putFloat("offsetX",o[0]).putFloat("offsetY",o[1]).putFloat("offsetZ",o[2]).putFloat("handScale",hs).apply();
                 dialog.dismiss();onResume();
             }catch(Exception e){pair.setError(e.getMessage());}
         }));dialog.show();

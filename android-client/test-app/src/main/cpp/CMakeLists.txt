@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.22.1)
+project(phonexr_render_test LANGUAGES CXX)
+add_library(phonexr_render_test SHARED render_test.cpp)
+target_compile_features(phonexr_render_test PRIVATE cxx_std_17)
+target_include_directories(phonexr_render_test PRIVATE ../../../../native)
+target_link_libraries(phonexr_render_test EGL GLESv3)

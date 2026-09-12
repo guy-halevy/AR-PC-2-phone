@@ -5,6 +5,9 @@ from pathlib import Path
 import select
 import socket
 import time
+import queue
+import threading
+import sys
 from cryptography.exceptions import InvalidTag
 from .protocol import Receiver
 from .adapter import Adapter, Manipulator
@@ -36,6 +39,17 @@ def drain(sock, receiver, peer):
     return latest, peer
 
 
+def read_controls(stream, commands):
+    """A closed GUI pipe requests the same release-and-exit path as Q."""
+    try:
+        for line in stream:
+            key = line.strip().lower()
+            if key in ('e', 'd', 'q'):
+                commands.put(key)
+    finally:
+        commands.put('q')
+
+
 def main():
     parser = argparse.ArgumentParser(description='PhoneXR authenticated hand input bridge (input initially disabled)')
     parser.add_argument('--host', required=True, help='LAN IPv4 address of this PC, embedded in pairing URI')
@@ -43,6 +57,7 @@ def main():
     parser.add_argument('--snapshot', type=Path, default=Path(os.environ.get('LOCALAPPDATA', '.'))/'PhoneXR'/'DesktopPlus'/'panels.json')
     parser.add_argument('--mouse-fallback', action='store_true', help='Explicit single-pointer mouse compatibility mode')
     parser.add_argument('--max-reprojection-px', type=float, default=8., help='Calibration reprojection gate (0.1..8 pixels)')
+    parser.add_argument('--gui-control', action='store_true', help=argparse.SUPPRESS)
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO)
     sink = WindowsSink(args.mouse_fallback)
@@ -58,13 +73,23 @@ def main():
     sock.setblocking(False)
     print(receiver.pairing_uri(args.host,args.port), flush=True)
     print('Pairing secret is local and expires on bridge restart. E enables input; D disables; Q exits. Input DISABLED.', flush=True)
+    commands = queue.SimpleQueue()
+    if args.gui_control:
+        threading.Thread(target=read_controls, args=(sys.stdin, commands), daemon=True).start()
     peer = None
     last_hands = None
     try:
         while True:
             now = time.monotonic()
-            if msvcrt.kbhit():
+            key = None
+            if args.gui_control:
+                try:
+                    key = commands.get_nowait()
+                except queue.Empty:
+                    pass
+            elif msvcrt.kbhit():
                 key = msvcrt.getwch().lower()
+            if key:
                 if key == 'q':
                     break
                 if key in ('e','d'):

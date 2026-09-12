@@ -30,6 +30,11 @@ import org.opencv.core.Core;
 
 @RunWith(AndroidJUnit4.class)
 public class XrInstrumentationTest {
+    private static native String renderProbe();
+    @Test public void stereoHandRendererDrawsAndRestoresState(){
+        System.loadLibrary("phonexr_render_test");
+        assertEquals("",renderProbe());
+    }
     private Context context(){return InstrumentationRegistry.getInstrumentation().getTargetContext();}
     @Test public void syntheticPnPRecoversStandingGeometryAndRejectsBadCalibration(){
         System.loadLibrary("opencv_java4");

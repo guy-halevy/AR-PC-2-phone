@@ -40,6 +40,8 @@ jobs:
         run: python -m unittest discover -s phonexr/tests/interaction -v
       - name: Package console bridge
         run: python -m PyInstaller --noconfirm --clean --onefile --console --name PhoneXRBridge --paths phonexr/windows-bridge --distpath bridge-dist phonexr/windows-bridge/bridge.py
+      - name: Package graphical companion
+        run: python -m PyInstaller --noconfirm --clean --onefile --windowed --name PhoneXRCompanion --paths phonexr/windows-bridge --distpath bridge-dist phonexr/windows-bridge/companion.py
       - name: Smoke test packaged entry point without initializing input
         run: ./bridge-dist/PhoneXRBridge.exe --help
       - name: Include corresponding source, dependency notices, and status
@@ -70,6 +72,42 @@ jobs:
                       target.parent.mkdir(parents=True, exist_ok=True)
                       shutil.copyfile(dist.locate_file(file), target)
           (output/'BUILD-STATUS.txt').write_text('PhoneXR development build: patched DesktopPlus v3.6 and authenticated Windows bridge.\nDesktopPlus baseline: 031d74d69f08411a9a9b1030d3d428ac02b93549.\nCI validates compilation, packaging and portable regressions only. SteamVR, captured-window mapping and physical input need hardware acceptance.\nInput starts disabled; see BRIDGE-README.md.\n')
+      - name: Stage per-user installer with source and notices
+        shell: python
+        run: |
+          from pathlib import Path
+          import shutil
+          stage = Path('installer-stage'); stage.mkdir()
+          for name in ('PhoneXRBridge.exe', 'PhoneXRCompanion.exe'):
+              shutil.copyfile(Path('bridge-dist')/name, stage/name)
+          shutil.copytree('desktopplus/src/x64/Release', stage/'DesktopPlus', ignore=shutil.ignore_patterns('*.h','*.lib','*.exp','*.pdb','*.obj'))
+          shutil.copytree('phonexr-artifact', stage/'Source-and-notices')
+          for name in ('DesktopPlus.exe', 'DesktopPlusUI.exe', 'openvr_api.dll', 'manifest.vrmanifest', 'action_manifest.json'):
+              if not (stage/'DesktopPlus'/name).is_file():
+                  raise RuntimeError('Missing Desktop+ runtime payload: '+name)
+      - name: Compile per-user installer
+        shell: pwsh
+        run: |
+          $compiler = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (!(Test-Path $compiler)) { throw 'Runner Inno Setup 6 is unavailable' }
+          & $compiler /DStageDir="$pwd\installer-stage" /O"$pwd\installer-dist" phonexr/windows-bridge/installer/PhoneXR.iss
+          if ($LASTEXITCODE -ne 0) { throw 'Installer compilation failed' }
+      - name: Test install, packaged entry points, and uninstall without input
+        shell: pwsh
+        run: |
+          $destination = "$env:RUNNER_TEMP\PhoneXR-install-test"
+          $setup = Start-Process "$pwd\installer-dist\PhoneXR-Companion-Setup.exe" -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART',"/DIR=`"$destination`"") -Wait -PassThru
+          if ($setup.ExitCode -ne 0) { throw 'Installation failed' }
+          foreach ($name in @('PhoneXRBridge.exe','PhoneXRCompanion.exe','DesktopPlus\DesktopPlus.exe','Source-and-notices\PhoneXR-source.zip')) {
+            if (!(Test-Path "$destination\$name")) { throw "Missing installed payload: $name" }
+          }
+          & "$destination\PhoneXRBridge.exe" --help
+          if ($LASTEXITCODE -ne 0) { throw 'Installed bridge smoke test failed' }
+          $gui = Start-Process "$destination\PhoneXRCompanion.exe" -ArgumentList '--self-test' -Wait -PassThru
+          if ($gui.ExitCode -ne 0) { throw 'Installed companion smoke test failed' }
+          $uninstall = Start-Process "$destination\unins000.exe" -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART') -Wait -PassThru
+          if ($uninstall.ExitCode -ne 0) { throw 'Uninstall failed' }
+          if (Test-Path "$destination\PhoneXRCompanion.exe") { throw 'Uninstall left installed application' }
       - name: Upload development binaries and corresponding source
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
@@ -81,5 +119,6 @@ jobs:
             !desktopplus/src/x64/Release/**/*.h
             !desktopplus/src/x64/Release/**/*.lib
             !desktopplus/src/x64/Release/**/*.exp
-            bridge-dist/PhoneXRBridge.exe
+            bridge-dist/*.exe
+            installer-dist/*.exe
             phonexr-artifact/**

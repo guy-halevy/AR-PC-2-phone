@@ -30,6 +30,8 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+      - name: Native renderer test dependencies
+        run: '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;25.2.9519653" "cmake;3.22.1"'
       - name: Download and verify the production hand model
         shell: python
         run: |

@@ -5,4 +5,5 @@ public final class NativeBridge {
     public static native void publishPose(boolean enabled, boolean tracking,
                                           long captureElapsedNs, float[] positionQuaternion);
     public static native boolean viewerConfigured();
+    public static native void publishHands(long captureElapsedNs, float[] standingLandmarks);
 }

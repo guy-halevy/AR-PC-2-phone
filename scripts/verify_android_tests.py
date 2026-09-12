@@ -4,6 +4,7 @@ import sys
 import xml.etree.ElementTree as ET
 
 EXPECTED = {
+    'stereoHandRendererDrawsAndRestoresState',
     'syntheticPnPRecoversStandingGeometryAndRejectsBadCalibration',
     'bundledHandModelLoadsAndBlankFrameHasNoHands',
     'senderEncryptsAndReservesNewSequenceRangeAcrossInstances',
